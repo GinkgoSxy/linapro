@@ -56,3 +56,19 @@
 - **WHEN** release workflow 发布多架构镜像
 - **THEN** `release-image` job SHALL 继续使用 plugin-full 构建配置
 - **AND** 发布出的 release tag 与 `latest` 浮动标签 SHALL 对应包含官方插件的镜像
+
+### Requirement: Release workflow 必须在发布门禁完成后创建 GitHub Release
+
+系统 SHALL 在 release tag 校验、共享测试验证套件和 GHCR 镜像发布全部成功后，为触发 workflow 的 Git tag 创建 GitHub Release。Release 标题 SHALL 使用 `LinaPro Release <tag>` 格式，其中 `<tag>` 是当前触发 workflow 的标签名称。
+
+#### Scenario: 发布成功后创建 GitHub Release
+- **WHEN** GitHub Actions 收到 tag push 事件
+- **AND** release tag 校验成功
+- **AND** 共享测试验证套件成功
+- **AND** release 镜像发布成功
+- **THEN** release workflow 创建当前标签对应的 GitHub Release
+- **AND** Release 标题为 `LinaPro Release <tag>`
+
+#### Scenario: 发布门禁失败时不创建 GitHub Release
+- **WHEN** release tag 校验、共享测试验证套件或 release 镜像发布任一阶段失败、取消或超时
+- **THEN** release workflow 不得创建 GitHub Release

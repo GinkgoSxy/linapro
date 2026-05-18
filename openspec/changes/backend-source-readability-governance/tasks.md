@@ -249,6 +249,24 @@
 - 该反馈属于项目治理类修复，不改变运行时行为；验证通过：宿主和源码插件 161 个变更 Go 文件顶部注释结构与泛化注释扫描、`gofmt`、`openspec validate backend-source-readability-governance --strict`、`git diff --check`、`git diff --cached --check`、`git -C apps/lina-plugins diff --check`。
 - 验证通过：`cd apps/lina-core && go test` 覆盖本变更涉及的宿主 service 与 `pkg` 包；基于临时 `go.work` 运行本次涉及源码插件的 `go test .../backend/internal/service/... -count=1`。
 
+- [x] **FB-2**: `hack/tools/linactl` 命令实现文件缺少按具体命令名称命名的治理规范和审查要求
+
+执行记录：
+- 已在 `AGENTS.md` 开发工具与脚本规范中补充 `linactl` 命令文件命名规则，要求具体命令实现使用 `command_<command>.go` 命名，并保留 `env.setup` 等点分段命令语义；同时记录 `test` 和 `wasm` 命令因 `Go` 工具链文件后缀规则需要使用命令专属后缀。
+- 已在 `lina-review` 开发工具与脚本跨平台审查中补充命令文件命名审查项，要求审查 `make dev`、`make build`、`make env.setup` 分别对应 `command_dev.go`、`command_build.go`、`command_env.setup.go` 这类映射，并标记继续沉淀到兜底文件的实现。
+- 已将现有 `hack/tools/linactl` 命令入口按规范拆分到具体命令文件，删除旧兜底 `command_ops.go`；共享实现已在后续 FB-3 中继续迁移到 `internal/<组件名称>` 子组件。
+- 已同步更新本 OpenSpec 变更的 `backend-conformance` 增量规范。本反馈不改变运行时业务行为、API、前端页面、i18n 资源、缓存策略或数据权限逻辑；涉及 `linactl` 工具源码组织和治理校验，因此使用 `linactl` 包测试、工具 smoke、OpenSpec 校验和格式检查验证。
+- 验证通过：`cd hack/tools/linactl && go test ./... -count=1`、`cd hack/tools/linactl && go run . test.scripts`、`cd hack/tools/linactl && go run . help --all`、`openspec validate backend-source-readability-governance --strict`、`git diff --check -- AGENTS.md .agents/skills/lina-review/SKILL.md openspec/changes/backend-source-readability-governance/specs/backend-conformance/spec.md openspec/changes/backend-source-readability-governance/tasks.md hack/tools/linactl`。
+
+- [x] **FB-3**: `hack/tools/linactl` 共享实现仍堆积在根目录，需迁移到 `internal/<组件名称>` 子组件
+
+执行记录：
+- 已在 `AGENTS.md` 开发工具与脚本规范中补充 `linactl` 子组件组织规则，要求根目录尽可能只保留 `command_*.go` 指令入口、`command.go` 注册与参数解析、`app.go`/`main.go` 启动装配、基础类型和必要的平台适配文件，复杂共享实现迁移到 `hack/tools/linactl/internal/<组件名称>/`。
+- 已在 `lina-review` 开发工具与脚本跨平台审查中补充 `linactl` 子组件组织审查项，要求标记根目录继续承载开发服务、插件工作区、GoFrame CLI、前端依赖、Playwright、镜像构建、仓库治理扫描或文件系统工具等复杂共享实现的问题。
+- 已将共享实现迁移到 `internal/config`、`internal/devservice`、`internal/fileutil`、`internal/frontend`、`internal/goframecli`、`internal/imagebuilder`、`internal/playwright`、`internal/plugins`、`internal/repository`、`internal/toolrun`、`internal/toolutil`；根目录保留命令入口、注册/解析、启动装配、基础类型、平台进程适配和测试文件。
+- 已同步更新本 OpenSpec 变更的 `backend-conformance` 增量规范。本反馈不改变运行时业务行为、API、前端页面、i18n 资源、缓存策略或数据权限逻辑；涉及 `linactl` 工具源码组织和治理校验，因此使用 `linactl` 全包测试、工具 smoke、OpenSpec 校验和格式检查验证。
+- 验证通过：`cd hack/tools/linactl && go test ./... -count=1`、`cd hack/tools/linactl && go run . test.scripts`、`cd hack/tools/linactl && go run . help --all`、`openspec validate backend-source-readability-governance --strict`、`git diff --check -- AGENTS.md .agents/skills/lina-review/SKILL.md openspec/changes/backend-source-readability-governance/specs/backend-conformance/spec.md openspec/changes/backend-source-readability-governance/tasks.md hack/tools/linactl`。
+
 ## 17. 全量复核与治理验证
 
 - [x] 17.1 全量扫描宿主、源码插件和 `lina-core/pkg` 主文件，确认复杂实现逻辑已按任务范围迁出或记录明确例外

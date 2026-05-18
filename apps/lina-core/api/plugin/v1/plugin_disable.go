@@ -1,6 +1,13 @@
+// This file defines plugin disablement API DTOs and the typed enabled response
+// flag returned after the lifecycle update.
+
 package v1
 
-import "github.com/gogf/gf/v2/frame/g"
+import (
+	"lina-core/pkg/statusflag"
+
+	"github.com/gogf/gf/v2/frame/g"
+)
 
 // DisableReq is the request for disabling plugin.
 type DisableReq struct {
@@ -10,6 +17,6 @@ type DisableReq struct {
 
 // DisableRes is the response for disabling plugin.
 type DisableRes struct {
-	Id      string `json:"id" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
-	Enabled int    `json:"enabled" dc:"Enabled status: 1=enabled 0=disabled" eg:"0"`
+	Id      string             `json:"id" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	Enabled statusflag.Enabled `json:"enabled" dc:"Enabled status: 1=enabled 0=disabled" eg:"0"`
 }

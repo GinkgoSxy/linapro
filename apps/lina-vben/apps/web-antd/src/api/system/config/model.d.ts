@@ -5,6 +5,11 @@ export interface SysConfig {
   value: string;
   isBuiltin: number;
   remark: string;
+  sourceTenantId: number;
+  isFallback: boolean;
+  canEdit: boolean;
+  canOverride: boolean;
+  overrideMode: 'createTenantOverride' | 'none';
   createdAt: string;
   updatedAt: string;
 }

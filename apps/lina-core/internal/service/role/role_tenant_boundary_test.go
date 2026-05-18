@@ -30,7 +30,7 @@ const (
 func TestCreateWritesTenantOwnershipAndRoleMenuTenant(t *testing.T) {
 	ctx := datascope.WithTenantForTest(context.Background(), 62001)
 	svc := newDefaultRoleTestService()
-	menuID := insertRoleTenantBoundaryMenu(t, ctx, "tenant-create", "system:tenant:create", 62001)
+	menuID := insertRoleTenantBoundaryMenu(t, ctx, "tenant-create", "system:tenant:plugin:list", 62001)
 	t.Cleanup(func() {
 		cleanupRoleTestRows(t, ctx, nil, nil, []int{menuID})
 	})

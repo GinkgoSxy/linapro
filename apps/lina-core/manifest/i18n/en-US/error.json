@@ -122,6 +122,11 @@
         "exists": "Dictionary type already exists",
         "not": {
           "found": "Dictionary type does not exist"
+        },
+        "tenant": {
+          "override": {
+            "denied": "This dictionary type does not allow tenant override"
+          }
         }
       }
     },
@@ -776,6 +781,16 @@
         }
       },
       "source": {
+        "cache": {
+          "plugin": {
+            "id": {
+              "required": "Source plugin cache service requires a plugin ID"
+            }
+          },
+          "service": {
+            "unavailable": "Source plugin cache service is not configured"
+          }
+        },
         "enable": {
           "failed": "Failed to enable source plugin"
         },
@@ -900,6 +915,11 @@
             "unavailable": "Department data scope requires the organization management plugin to be enabled"
           },
           "unsupported": "Unsupported role data scope: {scope}"
+        }
+      },
+      "menu": {
+        "assignment": {
+          "forbidden": "The current context cannot assign the selected menu permissions"
         }
       }
     },
@@ -1213,6 +1233,11 @@
     "session": {
       "state": {
         "unavailable": "Online-session state is temporarily unavailable"
+      }
+    },
+    "platform": {
+      "permission": {
+        "required": "Platform context permission is required"
       }
     }
   },

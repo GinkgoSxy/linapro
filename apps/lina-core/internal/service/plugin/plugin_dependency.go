@@ -191,7 +191,7 @@ func (s *serviceImpl) prepareInstallDependencies(
 		installCtx := dependencyContextFrom(nextCtx)
 		installCtx.skipAutoPlan = true
 		itemCtx := context.WithValue(nextCtx, dependencyInstallContextKey{}, installCtx)
-		if _, err = s.Install(itemCtx, item.PluginID, dependencyInstallOptions(options)); err != nil {
+		if _, err = s.install(itemCtx, item.PluginID, dependencyInstallOptions(options)); err != nil {
 			return result, nextCtx, s.buildDependencyAutoInstallFailedError(normalizedID, item.PluginID, installed, err)
 		}
 		installed = append(installed, toDependencyAutoInstallItem(item))

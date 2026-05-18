@@ -29,3 +29,15 @@
 - **AND** 应用连接 Compose 内的`PostgreSQL`服务作为数据库
 - **AND** 应用运行期数据和`PostgreSQL`数据写入容器内`tmpfs`
 - **AND** 停止并删除容器后演示数据不会通过宿主磁盘卷保留
+
+### Requirement: Deployment test Compose must provide a manual development container
+
+系统 SHALL 在`hack/deploy/tests/docker-compose.yaml`提供一个用于手动验证开发指令的`Docker Compose`测试入口。该入口 MUST 启动`PostgreSQL`服务，MUST 启动基于`loads/ubuntu:24.04-npm`的长期驻留开发容器，MUST 将当前仓库挂载到开发容器工作目录，MUST 通过`GF_GCFG_PATH`指向`hack/deploy/tests`配置目录并读取其中的`config.yaml`，MUST 等待`PostgreSQL`健康后再保持开发容器可进入状态，MUST NOT 自动执行`lina init`、`lina mock`或启动 LinaPro HTTP 服务。
+
+#### Scenario: 进入开发容器手动执行验证命令
+
+- **WHEN** 开发者运行`docker compose -f hack/deploy/tests/docker-compose.yaml up -d`
+- **THEN** Compose 启动一次性`PostgreSQL`服务
+- **AND** Compose 启动`loads/ubuntu:24.04-npm`开发容器并挂载当前仓库
+- **AND** 开发者可以通过`docker compose -f hack/deploy/tests/docker-compose.yaml exec dev bash`进入容器
+- **AND** 开发者在容器内手动执行初始化、构建、测试或其他开发验证命令

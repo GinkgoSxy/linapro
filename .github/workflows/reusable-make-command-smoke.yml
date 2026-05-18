@@ -144,7 +144,6 @@ jobs:
           cp Makefile "$smoke_root/Makefile"
           cp -R hack/makefiles "$smoke_root/hack/makefiles"
           cp -R hack/tools/linactl "$smoke_root/hack/tools/linactl"
-          cp -R hack/tools/build-wasm "$smoke_root/hack/tools/build-wasm"
           cp apps/lina-core/go.mod "$smoke_root/apps/lina-core/go.mod"
           cp apps/lina-core/go.sum "$smoke_root/apps/lina-core/go.sum"
           cp -R apps/lina-core/pkg/pluginbridge "$smoke_root/apps/lina-core/pkg/pluginbridge"
@@ -155,7 +154,6 @@ jobs:
           use (
             ./apps/lina-core
             ./hack/tools/linactl
-            ./hack/tools/build-wasm
           )
           WORK
           cat > "$smoke_root/apps/lina-plugins/demo-dynamic/plugin.yaml" <<'YAML'

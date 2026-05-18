@@ -169,6 +169,10 @@ func (s *serviceImpl) GetDetail(ctx context.Context, id int) (*GetDetailOutput, 
 	for _, rm := range roleMenus {
 		menuIds = append(menuIds, rm.MenuId)
 	}
+	menuIds, err = s.FilterAssignableMenuIDs(ctx, menuIds)
+	if err != nil {
+		return nil, err
+	}
 
 	return &GetDetailOutput{
 		Role:    role,
@@ -183,6 +187,9 @@ func (s *serviceImpl) Create(ctx context.Context, in CreateInput) (int, error) {
 	}
 	ownership := currentRoleOwnership(ctx)
 	if err := ensureTenantRoleDataScopeBoundary(ownership.TenantID, in.DataScope); err != nil {
+		return 0, err
+	}
+	if err := s.EnsureAssignableMenuIDs(ctx, in.MenuIds); err != nil {
 		return 0, err
 	}
 
@@ -246,6 +253,9 @@ func (s *serviceImpl) Update(ctx context.Context, in UpdateInput) error {
 		if err := ensureTenantRoleDataScopeBoundary(ownership.TenantID, *in.DataScope); err != nil {
 			return err
 		}
+	}
+	if err := s.EnsureAssignableMenuIDs(ctx, in.MenuIds); err != nil {
+		return err
 	}
 
 	// Check name uniqueness (excluding self)

@@ -66,7 +66,7 @@ func TestStoreLoadedEnabledSnapshotBackfillsSharedState(t *testing.T) {
 	}
 	svc := &serviceImpl{sharedState: shared}
 
-	svc.storeLoadedEnabledSnapshot(map[string]bool{
+	svc.storeLoadedEnabledSnapshot(context.Background(), map[string]bool{
 		"plugin-enabled":  true,
 		"plugin-disabled": false,
 	})
@@ -87,6 +87,31 @@ func TestStoreLoadedEnabledSnapshotBackfillsSharedState(t *testing.T) {
 	}
 	if enabledByID["plugin-missing"] {
 		t.Fatal("expected missing plugin to default to disabled")
+	}
+}
+
+// TestTenantSnapshotDoesNotOverwritePlatformSnapshot verifies tenant-scoped
+// visibility checks cannot poison the shared platform menu-filter snapshot.
+func TestTenantSnapshotDoesNotOverwritePlatformSnapshot(t *testing.T) {
+	shared := &sharedState{
+		sourceRouteBindings: make(map[string][]pluginhost.SourceRouteBinding),
+		enabledSnapshot:     make(map[string]bool),
+	}
+	svc := &serviceImpl{sharedState: shared}
+
+	svc.storeLoadedEnabledSnapshot(context.Background(), map[string]bool{
+		"monitor-loginlog": true,
+	})
+	svc.storeLoadedEnabledSnapshot(datascope.WithTenantForTest(context.Background(), 42), map[string]bool{
+		"monitor-loginlog": false,
+	})
+
+	enabledByID := map[string]bool{"monitor-loginlog": false}
+	if !svc.applyLoadedEnabledSnapshot(enabledByID) {
+		t.Fatal("expected platform snapshot to remain available")
+	}
+	if !enabledByID["monitor-loginlog"] {
+		t.Fatal("expected tenant snapshot not to hide platform admin monitor menu")
 	}
 }
 

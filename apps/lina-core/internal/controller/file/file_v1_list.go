@@ -20,7 +20,7 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 		BeginTime:      req.BeginTime,
 		EndTime:        req.EndTime,
 		OrderBy:        req.OrderBy,
-		OrderDirection: req.OrderDirection,
+		OrderDirection: string(req.OrderDirection),
 	})
 	if err != nil {
 		return nil, err

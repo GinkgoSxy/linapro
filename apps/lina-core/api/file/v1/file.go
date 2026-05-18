@@ -1,4 +1,4 @@
-// This file defines shared file response DTOs for the file API.
+// Package v1 defines shared file API DTOs and compact enum contracts.
 package v1
 
 import "github.com/gogf/gf/v2/os/gtime"

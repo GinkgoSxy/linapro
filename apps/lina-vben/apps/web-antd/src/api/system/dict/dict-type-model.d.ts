@@ -4,8 +4,15 @@ export interface DictType {
   type: string;
   status: number;
   isBuiltin: number;
+  allowTenantOverride: boolean;
   remark: string;
+  sourceTenantId: number;
+  isFallback: boolean;
+  canEdit: boolean;
+  canOverride: boolean;
+  overrideMode: 'createTenantOverride' | 'none';
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface DictTypeListParams {

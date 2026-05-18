@@ -136,6 +136,7 @@ func (s *serviceImpl) createRunningLog(
 	}
 
 	insertID, err := dao.SysJobLog.Ctx(ctx).Data(do.SysJobLog{
+		TenantId:       job.TenantId,
 		JobId:          job.Id,
 		JobSnapshot:    string(snapshot),
 		NodeId:         s.nodeID(),
@@ -169,6 +170,7 @@ func (s *serviceImpl) createTerminalLog(
 	}
 
 	_, err = dao.SysJobLog.Ctx(ctx).Data(do.SysJobLog{
+		TenantId:       job.TenantId,
 		JobId:          job.Id,
 		JobSnapshot:    string(snapshot),
 		NodeId:         s.nodeID(),

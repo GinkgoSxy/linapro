@@ -8,6 +8,7 @@ import (
 	"lina-core/api/jobgroup/v1"
 	"lina-core/internal/model/entity"
 	jobmgmtsvc "lina-core/internal/service/jobmgmt"
+	"lina-core/pkg/statusflag"
 )
 
 // List handles scheduled job group list requests.
@@ -18,7 +19,7 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 		Code:           req.Code,
 		Name:           req.Name,
 		OrderBy:        req.OrderBy,
-		OrderDirection: req.OrderDirection,
+		OrderDirection: string(req.OrderDirection),
 	})
 	if err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func jobGroupItem(group *entity.SysJobGroup) v1.JobGroupItem {
 		Name:      group.Name,
 		Remark:    group.Remark,
 		SortOrder: group.SortOrder,
-		IsDefault: group.IsDefault,
+		IsDefault: statusflag.YesNo(group.IsDefault),
 		CreatedAt: group.CreatedAt,
 		UpdatedAt: group.UpdatedAt,
 	}

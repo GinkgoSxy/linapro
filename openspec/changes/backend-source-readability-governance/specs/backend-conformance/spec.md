@@ -24,6 +24,19 @@
 - **且** 复杂组件优先按业务职责拆分为多个 `<component>_<domain>.go` 文件
 - **且** 迁移不得改变包名、导出符号、方法签名、错误语义、权限语义或业务行为
 
+#### Scenario: linactl 命令实现按命令名命名
+- **当** 开发者在 `hack/tools/linactl/` 中新增或整改具体 `make` 或 `linactl` 命令实现文件时
+- **则** 文件名使用 `command_<command>.go`，其中 `<command>` 保留命令的点分段语义
+- **且** `make dev`、`make build`、`make env.setup` 分别由 `command_dev.go`、`command_build.go`、`command_env.setup.go` 承载主实现
+- **且** 当命令名与 `Go` 工具链文件后缀规则冲突时，文件使用明确的命令专属后缀并记录原因，例如 `test` 使用 `command_testcmd.go`，`wasm` 使用 `command_wasmcmd.go`
+- **且** 跨命令复用逻辑提取到职责明确的非命令文件，不继续沉淀到 `command_ops.go` 这类兜底文件
+
+#### Scenario: linactl 复杂实现迁移到 internal 子组件
+- **当** 开发者新增或整改 `hack/tools/linactl/` 下的跨命令复用能力或复杂实现逻辑时
+- **则** 根目录尽可能只保留 `command_*.go` 指令入口、`command.go` 注册与参数解析、`app.go`/`main.go` 启动装配、基础类型和必要的平台适配文件
+- **且** 开发服务、插件工作区、GoFrame CLI、前端依赖、Playwright、镜像构建、仓库治理扫描、文件系统工具等实现迁移到 `hack/tools/linactl/internal/<组件名称>/` 子组件
+- **且** 根目录命令文件通过明确的子组件包接口引用实现逻辑，不继续新增或保留 `*_ops.go`、`*_management.go`、`*_workspace.go`、`*_util.go` 等承载复杂共享实现的兜底文件
+
 ## MODIFIED Requirements
 
 ### Requirement: 公开符号文档完整
@@ -102,3 +115,15 @@
 - **WHEN** 后端源码可读性整改任务完成一个模块批次
 - **THEN** 审查确认任务记录了本批修改范围、行为不变判断、i18n 影响、缓存一致性影响、数据权限影响和 Go 编译门禁结果
 - **AND** 未提供对应验证证据的批次不得标记完成
+
+#### Scenario: 审查 linactl 命令文件命名
+- **WHEN** `lina-review` 审查 `hack/tools/linactl/` 下新增或修改的命令实现
+- **THEN** 审查确认具体命令实现文件按 `command_<command>.go` 命名并保留点分段命令语义
+- **AND** 审查确认 `test`、`wasm` 等与 `Go` 工具链后缀规则冲突的命令使用有说明的命令专属后缀
+- **AND** 审查标记多个无直接归属的命令被混放到 `command_ops.go` 等兜底文件的实现
+
+#### Scenario: 审查 linactl 子组件组织
+- **WHEN** `lina-review` 审查 `hack/tools/linactl/` 下新增或修改的共享实现逻辑
+- **THEN** 审查确认复杂实现已迁移到 `internal/<组件名称>/` 子组件并通过包接口引用
+- **AND** 审查确认根目录新增或遗留的非命令文件属于命令注册、启动装配、基础类型或平台适配边界
+- **AND** 审查标记根目录继续承载开发服务、插件工作区、GoFrame CLI、前端依赖、Playwright、镜像构建、仓库治理扫描或文件系统工具等复杂共享实现的问题

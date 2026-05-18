@@ -10,11 +10,13 @@ go run . help
 go run . status
 go run . pack.assets
 go run . wasm p=plugin-demo-dynamic
+go run . wasm plugin_dir=/path/to/plugin out=temp/output
 go run . plugins.status
 go run . i18n.check
 go run . init confirm=init
 go run . tidy
 go run . build platforms=linux/amd64,linux/arm64
+go run . image tag=v0.2.0 push=0
 go run . release.tag.check tag=v0.2.0
 go run . release.tag.check print-version=1
 ```
@@ -57,11 +59,36 @@ In PowerShell, run it with an explicit current-directory prefix:
 | `tag` | `tag=v0.2.0` | Selects the release tag checked by `release.tag.check`. |
 | `print-version` | `print-version=1` | Prints the validated `framework.version` for release automation. |
 | `p` | `p=multi-tenant` | Selects one plugin for Wasm build or plugin workspace management commands. |
+| `plugin-dir` | `plugin_dir=/path/to/plugin` | Builds one dynamic plugin artifact from an explicit source directory. |
+| `out` | `out=temp/output` | Selects the dynamic plugin artifact output directory. |
 | `source` | `source=official` | Selects one configured plugin source for plugin workspace management commands. |
 | `force` | `force=1` | Allows plugin install/update commands to overwrite existing or dirty plugin directories. |
 | `verbose` | `verbose=1` | Shows child command output for build tasks. |
 
 When `plugins` is omitted, build and dev commands enable plugin-full mode if `apps/lina-plugins` contains plugin manifests. Plugin-full mode generates or refreshes ignored `temp/go.work.plugins` from the host-only root `go.work`, then resolves source-plugin Go modules through `GOWORK`.
+
+## Build Tool Commands
+
+`linactl` owns the repository image build and dynamic plugin `Wasm` packaging implementation. The public entrypoints remain the root `make` targets and their direct `linactl` equivalents:
+
+```bash
+make image tag=v0.2.0 push=0
+make image.build tag=v0.2.0
+make wasm p=plugin-demo-dynamic
+```
+
+Use `plugin_dir=<path>` when a test or local fixture needs to package a dynamic plugin outside `apps/lina-plugins`.
+
+## Runtime I18n Checks
+
+`linactl i18n.check` owns the runtime `i18n` governance checks. It scans high-risk runtime-visible hard-coded copy and validates host/plugin runtime message key coverage:
+
+```bash
+make i18n.check
+go run . i18n.check
+```
+
+The default scanner allowlist is maintained at `hack/tools/linactl/internal/runtimei18n/allowlist.json`.
 
 ## Release Tag Check
 
@@ -114,5 +141,6 @@ go test ./...
 go run . help
 go run . wasm dry-run=true
 go run . plugins.status
+go run . i18n.check
 go run . release.tag.check tag=v0.2.0
 ```

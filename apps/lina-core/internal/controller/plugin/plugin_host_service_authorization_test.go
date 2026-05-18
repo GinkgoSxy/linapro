@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	jobv1 "lina-core/api/job/v1"
 	"lina-core/internal/service/jobmeta"
 	pluginsvc "lina-core/internal/service/plugin"
 	"lina-core/pkg/pluginbridge"
@@ -119,10 +120,10 @@ func TestBuildHostServicePermissionItemsIncludesCronItems(t *testing.T) {
 	if cronItem.CronItems[0].Pattern != "# */10 * * * *" {
 		t.Fatalf("expected cron pattern preserved, got %s", cronItem.CronItems[0].Pattern)
 	}
-	if cronItem.CronItems[0].Scope != string(jobmeta.JobScopeAllNode) {
+	if cronItem.CronItems[0].Scope != jobv1.Scope(jobmeta.JobScopeAllNode) {
 		t.Fatalf("expected cron scope all_node, got %s", cronItem.CronItems[0].Scope)
 	}
-	if cronItem.CronItems[0].Concurrency != string(jobmeta.JobConcurrencySingleton) {
+	if cronItem.CronItems[0].Concurrency != jobv1.Concurrency(jobmeta.JobConcurrencySingleton) {
 		t.Fatalf("expected cron concurrency singleton, got %s", cronItem.CronItems[0].Concurrency)
 	}
 

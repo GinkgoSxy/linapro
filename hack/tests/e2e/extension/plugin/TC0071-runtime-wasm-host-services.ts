@@ -43,8 +43,8 @@ function buildOutputDir() {
   return path.join(tempRoot(), "artifacts");
 }
 
-function builderDir() {
-  return path.join(repoRoot(), "hack", "tools", "build-wasm");
+function linactlDir() {
+  return path.join(repoRoot(), "hack", "tools", "linactl");
 }
 
 function runtimeStorageDir() {
@@ -745,7 +745,7 @@ function buildDynamicPluginArtifact(pluginDir: string, pluginID: string) {
       "",
       "use (",
       `\t${path.join(repoRoot(), "apps", "lina-core")}`,
-      `\t${builderDir()}`,
+      `\t${linactlDir()}`,
       `\t${pluginDir}`,
       ")",
       "",
@@ -765,13 +765,12 @@ function buildDynamicPluginArtifact(pluginDir: string, pluginID: string) {
       [
         "run",
         ".",
-        "--plugin-dir",
-        pluginDir,
-        "--output-dir",
-        buildOutputDir(),
+        "wasm",
+        `plugin_dir=${pluginDir}`,
+        `out=${buildOutputDir()}`,
       ],
       {
-        cwd: builderDir(),
+        cwd: linactlDir(),
         env: {
           ...process.env,
           GOWORK: goWorkPath,

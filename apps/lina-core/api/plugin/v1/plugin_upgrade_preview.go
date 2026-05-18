@@ -13,7 +13,7 @@ type UpgradePreviewReq struct {
 // UpgradePreviewRes is the response for previewing one plugin runtime upgrade.
 type UpgradePreviewRes struct {
 	PluginId          string                        `json:"pluginId" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
-	RuntimeState      string                        `json:"runtimeState" dc:"Current plugin runtime upgrade state, expected to be pending_upgrade or upgrade_failed for preview" eg:"pending_upgrade"`
+	RuntimeState      RuntimeState                  `json:"runtimeState" dc:"Current plugin runtime upgrade state, expected to be pending_upgrade or upgrade_failed for preview" eg:"pending_upgrade"`
 	EffectiveVersion  string                        `json:"effectiveVersion" dc:"Database-effective plugin version before upgrade" eg:"v0.1.0"`
 	DiscoveredVersion string                        `json:"discoveredVersion" dc:"Target plugin version discovered from source plugin.yaml or dynamic artifact metadata" eg:"v0.2.0"`
 	FromManifest      *PluginManifestSnapshotItem   `json:"fromManifest" dc:"Current effective manifest snapshot before upgrade" eg:"{}"`
@@ -29,10 +29,10 @@ type PluginManifestSnapshotItem struct {
 	Id                        string                       `json:"id" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
 	Name                      string                       `json:"name" dc:"Plugin display name" eg:"Source Plugin Demo"`
 	Version                   string                       `json:"version" dc:"Manifest version" eg:"v0.2.0"`
-	Type                      string                       `json:"type" dc:"Plugin type: source or dynamic" eg:"source"`
-	ScopeNature               string                       `json:"scopeNature,omitempty" dc:"Plugin scope nature: platform_only or tenant_aware" eg:"tenant_aware"`
+	Type                      PluginType                   `json:"type" dc:"Plugin type: source or dynamic" eg:"source"`
+	ScopeNature               ScopeNature                  `json:"scopeNature,omitempty" dc:"Plugin scope nature: platform_only or tenant_aware" eg:"tenant_aware"`
 	SupportsMultiTenant       bool                         `json:"supportsMultiTenant" dc:"Whether the manifest supports tenant-level plugin governance" eg:"true"`
-	DefaultInstallMode        string                       `json:"defaultInstallMode,omitempty" dc:"Default plugin install mode: global or tenant_scoped" eg:"tenant_scoped"`
+	DefaultInstallMode        InstallMode                  `json:"defaultInstallMode,omitempty" dc:"Default plugin install mode: global or tenant_scoped" eg:"tenant_scoped"`
 	Description               string                       `json:"description,omitempty" dc:"Plugin description" eg:"Source plugin that provides examples"`
 	RuntimeKind               string                       `json:"runtimeKind,omitempty" dc:"Dynamic runtime kind when present" eg:"wasm"`
 	RuntimeAbiVersion         string                       `json:"runtimeAbiVersion,omitempty" dc:"Dynamic runtime ABI version when present" eg:"v1"`

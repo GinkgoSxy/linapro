@@ -7,9 +7,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/os/gtime"
 
+	"lina-core/internal/model"
 	internalauth "lina-core/internal/service/auth"
+	internalbizctx "lina-core/internal/service/bizctx"
 	internalsession "lina-core/internal/service/session"
 	plugincontract "lina-core/pkg/pluginservice/contract"
 )
@@ -131,6 +134,34 @@ func TestFromInternalSessionListResult(t *testing.T) {
 	}
 	if result.Items[0] == nil || result.Items[0].TokenId != "token-2" {
 		t.Fatalf("unexpected converted item: %#v", result.Items[0])
+	}
+}
+
+// TestBizCtxAdapterPlatformBypassRequiresAllDataPlatformContext verifies
+// source plugins receive the same strict platform-bypass semantics used by host
+// tenantcap instead of a tenant-id-only shortcut.
+func TestBizCtxAdapterPlatformBypassRequiresAllDataPlatformContext(t *testing.T) {
+	adapter := newBizCtxAdapter(internalbizctx.New())
+	testCases := []struct {
+		name     string
+		ctx      *model.Context
+		expected bool
+	}{
+		{name: "platform all data", ctx: &model.Context{TenantId: 0, DataScope: 1}, expected: true},
+		{name: "platform tenant scope", ctx: &model.Context{TenantId: 0, DataScope: 2}, expected: false},
+		{name: "impersonation", ctx: &model.Context{TenantId: 0, DataScope: 1, ActingAsTenant: true, IsImpersonation: true}, expected: false},
+		{name: "tenant context", ctx: &model.Context{TenantId: 1001, DataScope: 1}, expected: false},
+	}
+
+	for _, testCase := range testCases {
+		testCase := testCase
+		t.Run(testCase.name, func(t *testing.T) {
+			ctx := context.WithValue(context.Background(), gctx.StrKey("BizCtx"), testCase.ctx)
+			current := adapter.Current(ctx)
+			if current.PlatformBypass != testCase.expected {
+				t.Fatalf("expected PlatformBypass=%t, got %#v", testCase.expected, current)
+			}
+		})
 	}
 }
 

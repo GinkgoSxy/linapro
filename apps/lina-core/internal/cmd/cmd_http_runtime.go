@@ -238,6 +238,7 @@ func newHTTPRuntime(ctx context.Context, configSvc config.Service) (*httpRuntime
 		sessionStore,
 		tenantSvc,
 		notifySvc,
+		kvCacheSvc,
 	)
 	if err != nil {
 		closeHTTPCoordinationAfterInitError(ctx, coordinationSvc)

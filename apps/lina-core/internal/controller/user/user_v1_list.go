@@ -1,3 +1,6 @@
+// This file implements user list projection and maps persisted status values
+// into the shared public enabled flag contract.
+
 package user
 
 import (
@@ -6,6 +9,7 @@ import (
 	v1 "lina-core/api/user/v1"
 	"lina-core/internal/model/entity"
 	usersvc "lina-core/internal/service/user"
+	"lina-core/pkg/statusflag"
 )
 
 // List queries user list
@@ -23,7 +27,7 @@ func (c *ControllerV1) List(ctx context.Context, req *v1.ListReq) (res *v1.ListR
 		BeginTime:      req.BeginTime,
 		EndTime:        req.EndTime,
 		OrderBy:        req.OrderBy,
-		OrderDirection: req.OrderDirection,
+		OrderDirection: string(req.OrderDirection),
 	})
 	if err != nil {
 		return nil, err
@@ -61,7 +65,7 @@ func userItem(user *entity.SysUser) v1.UserItem {
 		Phone:     user.Phone,
 		Sex:       user.Sex,
 		Avatar:    user.Avatar,
-		Status:    user.Status,
+		Status:    statusflag.Enabled(user.Status),
 		Remark:    user.Remark,
 		LoginDate: user.LoginDate,
 		CreatedAt: user.CreatedAt,

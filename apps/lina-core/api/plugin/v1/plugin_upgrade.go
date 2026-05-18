@@ -14,11 +14,11 @@ type UpgradeReq struct {
 
 // UpgradeRes is the response for executing one plugin runtime upgrade.
 type UpgradeRes struct {
-	PluginId          string `json:"pluginId" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
-	RuntimeState      string `json:"runtimeState" dc:"Plugin runtime upgrade state after the request" eg:"normal"`
-	EffectiveVersion  string `json:"effectiveVersion" dc:"Database-effective plugin version after the request" eg:"v0.2.0"`
-	DiscoveredVersion string `json:"discoveredVersion" dc:"Currently discovered plugin version after the request" eg:"v0.2.0"`
-	FromVersion       string `json:"fromVersion" dc:"Database-effective plugin version observed before upgrade" eg:"v0.1.0"`
-	ToVersion         string `json:"toVersion" dc:"Target plugin version requested by the operator" eg:"v0.2.0"`
-	Executed          bool   `json:"executed" dc:"Whether upgrade side effects were executed by this request" eg:"true"`
+	PluginId          string       `json:"pluginId" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	RuntimeState      RuntimeState `json:"runtimeState" dc:"Plugin runtime upgrade state after the request" eg:"normal"`
+	EffectiveVersion  string       `json:"effectiveVersion" dc:"Database-effective plugin version after the request" eg:"v0.2.0"`
+	DiscoveredVersion string       `json:"discoveredVersion" dc:"Currently discovered plugin version after the request" eg:"v0.2.0"`
+	FromVersion       string       `json:"fromVersion" dc:"Database-effective plugin version observed before upgrade" eg:"v0.1.0"`
+	ToVersion         string       `json:"toVersion" dc:"Target plugin version requested by the operator" eg:"v0.2.0"`
+	Executed          bool         `json:"executed" dc:"Whether upgrade side effects were executed by this request" eg:"true"`
 }

@@ -3,9 +3,7 @@
 ## Purpose
 
 定义配置管理行为，包括本地化导入/导出元数据、内置参数展示和系统拥有记录的删除保护。
-
 ## Requirements
-
 ### Requirement:配置导出和导入表头必须通过翻译键按当前语言解析
 
 系统 SHALL 在配置 Excel 导出和导入流程中通过 `config.field.<name>` 翻译键按当前请求语言解析列头（`name`、`key`、`value`、`remark`、`createdAt`、`updatedAt`）。后端 Go 源码不得维护字面的英文/中文表头映射。新增语言只需在 `apps/lina-core/manifest/i18n/<locale>/*.json` 下添加对应的 `config.field.*` 资源。
@@ -93,3 +91,37 @@
 - **当** 节点无法读取共享修订号且其本地运行时参数快照超过故障窗口时
 - **则** 系统返回可见错误或按该参数域声明的策略降级
 - **且** 系统不得无限期静默使用旧参数快照
+
+### Requirement: 运行时配置 revision 必须使用 Redis coordination
+系统 SHALL 在集群模式下通过 Redis revision/event 协调受保护运行时参数变更。`sys_config` 仍为权威数据源，Redis 仅承载 revision 和失效事件。
+
+#### Scenario: 修改 JWT 过期配置
+- **WHEN** 管理员修改 `sys.jwt.expire`
+- **THEN** 系统提交 `sys_config` 权威数据
+- **AND** 发布 `runtime-config` Redis revision
+- **AND** 其他节点刷新运行时参数快照
+
+#### Scenario: 修改会话超时配置
+- **WHEN** 管理员修改 `sys.session.timeout`
+- **THEN** 系统发布 `runtime-config` Redis revision
+- **AND** 新请求使用更新后的会话超时策略
+
+### Requirement: 运行时配置 freshness 不可确认时必须返回可见错误
+系统 SHALL 在读取受保护运行时参数前确认本地快照 freshness。当 Redis revision 不可读取且本地快照超过最大陈旧窗口时，系统 MUST 返回结构化错误，不得静默使用陈旧配置。
+
+#### Scenario: Redis runtime-config revision 不可读
+- **WHEN** 请求路径需要读取受保护运行时参数
+- **AND** Redis revision 不可读
+- **AND** 本地运行时参数快照超过最大陈旧窗口
+- **THEN** 系统返回结构化配置 freshness 错误
+- **AND** 记录可观测日志
+
+### Requirement: 单机运行时配置保持本地 revision
+系统 SHALL 在单机模式下使用进程内 revision 管理运行时参数快照失效，不得要求 Redis。
+
+#### Scenario: 单机修改运行时配置
+- **WHEN** `cluster.enabled=false`
+- **AND** 管理员修改受保护运行时参数
+- **THEN** 系统更新进程内 revision
+- **AND** 当前进程清理本地运行时参数快照
+

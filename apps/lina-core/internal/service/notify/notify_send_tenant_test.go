@@ -23,7 +23,7 @@ import (
 
 const (
 	// notifyTenantMembershipTable is the plugin-owned membership table used by tests.
-	notifyTenantMembershipTable = "plugin_multi_tenant_user_membership"
+	notifyTenantMembershipTable = "plugin_linapro_tenant_core_user_membership"
 	// notifyTenantMembershipStatusActive marks active test memberships.
 	notifyTenantMembershipStatusActive = 1
 )
@@ -201,7 +201,7 @@ func TestSendNoticePublicationPlatformUsesPlatformUserBoundary(t *testing.T) {
 // notifyTenantEnablementReader marks multi-tenancy enabled in notify tests.
 type notifyTenantEnablementReader struct{}
 
-// IsEnabled reports multi-tenant as enabled.
+// IsEnabled reports linapro-tenant-core as enabled.
 func (notifyTenantEnablementReader) IsEnabled(_ context.Context, pluginID string) bool {
 	return pluginID == pkgtenantcap.ProviderPluginID
 }
@@ -390,13 +390,13 @@ func insertNotifyTenantTestMembership(t *testing.T, ctx context.Context, userID 
 }
 
 // ensureNotifyTenantTestMembershipTable creates the minimal plugin membership
-// table needed by host notification tests when the multi-tenant plugin has not
+// table needed by host notification tests when the linapro-tenant-core plugin has not
 // been installed in the local test database.
 func ensureNotifyTenantTestMembershipTable(t *testing.T, ctx context.Context) {
 	t.Helper()
 
 	_, err := g.DB().Exec(ctx, `
-CREATE TABLE IF NOT EXISTS plugin_multi_tenant_user_membership (
+CREATE TABLE IF NOT EXISTS plugin_linapro_tenant_core_user_membership (
 	    "id" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	    "user_id" BIGINT NOT NULL,
 	    "tenant_id" BIGINT NOT NULL,

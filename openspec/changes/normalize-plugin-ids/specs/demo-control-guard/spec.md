@@ -16,7 +16,7 @@
 
 ### Requirement: 宿主必须随源码树交付 linapro-ops-demo-guard 源码插件
 
-系统 SHALL 交付名为 `linapro-ops-demo-guard` 的官方源码插件，使部署可通过启动配置或插件治理启用该能力。宿主不得再将 `demo-control` 作为官方演示只读保护插件 ID 暴露。
+系统 SHALL 交付名为 `linapro-ops-demo-guard` 的官方源码插件，使部署可通过启动配置或插件治理启用该能力。宿主不得再将旧 ID `demo-control` 作为官方演示只读保护插件 ID 暴露。
 
 #### Scenario: 宿主发现 linapro-ops-demo-guard 源码插件
 - **WHEN** 宿主扫描源码插件并同步注册表数据
@@ -93,7 +93,7 @@
 
 ## REMOVED Requirements
 
-### Requirement: 演示只读模式由插件的启用状态控制系统
+### Requirement: 演示只读模式由 demo-control 的启用状态控制系统
 
 **Reason**: 该要求绑定旧官方插件 ID `demo-control`。本变更将该插件破坏式重命名为 `linapro-ops-demo-guard`，不保留旧 ID 兼容。
 

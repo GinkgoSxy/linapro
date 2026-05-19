@@ -3,8 +3,8 @@ import type { Page, Route } from '@playwright/test';
 import { test, expect } from '../../../fixtures/auth';
 import { PluginPage } from '../../../pages/PluginPage';
 
-const installPluginID = 'plugin-demo-control-install-toast-e2e';
-const uninstallPluginID = 'plugin-demo-control-uninstall-toast-e2e';
+const installPluginID = 'plugin-dev-linapro-ops-demo-guard-install-toast-e2e';
+const uninstallPluginID = 'plugin-dev-linapro-ops-demo-guard-uninstall-toast-e2e';
 const demoControlMessage = '演示模式已开启，禁止执行写操作';
 const demoControlMessageKey = 'error.demo.control.write.denied';
 
@@ -43,7 +43,7 @@ function pluginRow(input: PluginRowInput) {
     authorizedHostServices: [],
     declaredRoutes: [],
     dependencyCheck: emptyDependencyCheck(input.id),
-    description: 'Used by E2E to verify demo-control toast ownership.',
+    description: 'Used by E2E to verify linapro-ops-demo-guard toast ownership.',
     discoveredVersion: 'v0.1.0',
     effectiveVersion: 'v0.1.0',
     enabled: 0,
@@ -171,8 +171,8 @@ async function expectSingleDemoControlToast(pluginPage: PluginPage) {
   await expect(pluginPage.messageNotices('服务器内部错误')).toHaveCount(0);
 }
 
-test.describe('TC-238 demo-control 插件生命周期错误提示', () => {
-  test('TC-238a: 安装弹窗提交被 demo-control 拦截时只显示一条只读错误', async ({
+test.describe('TC-238 linapro-ops-demo-guard 插件生命周期错误提示', () => {
+  test('TC-238a: 安装弹窗提交被 linapro-ops-demo-guard 拦截时只显示一条只读错误', async ({
     adminPage,
   }) => {
     await mockPluginLifecycleApis(adminPage);
@@ -188,7 +188,7 @@ test.describe('TC-238 demo-control 插件生命周期错误提示', () => {
     await expect(pluginPage.hostServiceAuthDialog()).toBeVisible();
   });
 
-  test('TC-238b: 卸载弹窗提交被 demo-control 拦截时只显示一条只读错误', async ({
+  test('TC-238b: 卸载弹窗提交被 linapro-ops-demo-guard 拦截时只显示一条只读错误', async ({
     adminPage,
   }) => {
     await mockPluginLifecycleApis(adminPage);

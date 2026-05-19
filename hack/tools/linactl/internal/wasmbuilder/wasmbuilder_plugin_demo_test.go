@@ -24,7 +24,7 @@ func TestPluginDemoDynamicRuntimeArtifactEmbedsReviewedAssets(t *testing.T) {
 		t.Fatal("expected builder test to resolve repo root")
 	}
 
-	pluginDir := filepath.Join(repoRoot, "apps", "lina-plugins", "plugin-demo-dynamic")
+	pluginDir := filepath.Join(repoRoot, "apps", "lina-plugins", "linapro-demo-dynamic")
 	requireOfficialPluginDemoDynamic(t, pluginDir)
 	prepareTemporaryPluginGoWorkForTest(t, repoRoot)
 	expectedFrontendAssets := mustCollectSourceFrontendAssets(t, pluginDir)
@@ -46,7 +46,7 @@ func TestPluginDemoDynamicRuntimeArtifactEmbedsReviewedAssets(t *testing.T) {
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionManifest], manifest); err != nil {
 		t.Fatalf("expected manifest section json to unmarshal, got error: %v", err)
 	}
-	if manifest.ID != "plugin-demo-dynamic" {
+	if manifest.ID != "linapro-demo-dynamic" {
 		t.Fatalf("expected dynamic demo plugin id, got %s", manifest.ID)
 	}
 	if manifest.Type != pluginTypeDynamic {

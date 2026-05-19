@@ -535,7 +535,7 @@ func TestRunWasmResolvesExplicitRelativeOutputFromCurrentDirectory(t *testing.T)
 	root := t.TempDir()
 	pluginRoot := filepath.Join(root, "apps", "lina-plugins")
 	writeFile(t, filepath.Join(root, "go.work"), "go 1.25.0\n")
-	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "plugin-demo-dynamic"), "plugin-demo-dynamic")
+	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "linapro-demo-dynamic"), "linapro-demo-dynamic")
 
 	workDir := filepath.Join(pluginRoot)
 	if err := os.MkdirAll(workDir, 0o755); err != nil {
@@ -560,14 +560,14 @@ func TestRunWasmResolvesExplicitRelativeOutputFromCurrentDirectory(t *testing.T)
 	if err = runWasm(context.Background(), application, commandInput{
 		Params: map[string]string{
 			"out": "../../temp/output",
-			"p":   "plugin-demo-dynamic",
+			"p":   "linapro-demo-dynamic",
 		},
 	}); err != nil {
 		t.Fatalf("runWasm returned error: %v", err)
 	}
 
 	expected := filepath.Clean(filepath.Join(workDir, "../../temp/output"))
-	artifactPath := filepath.Join(expected, "plugin-demo-dynamic.wasm")
+	artifactPath := filepath.Join(expected, "linapro-demo-dynamic.wasm")
 	if !fileutil.FileExists(artifactPath) {
 		t.Fatalf("expected wasm artifact at %s", artifactPath)
 	}
@@ -577,20 +577,20 @@ func TestRunWasmUsesRepositoryTempOutputByDefault(t *testing.T) {
 	root := t.TempDir()
 	pluginRoot := filepath.Join(root, "apps", "lina-plugins")
 	writeFile(t, filepath.Join(root, "go.work"), "go 1.25.0\n")
-	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "plugin-demo-dynamic"), "plugin-demo-dynamic")
+	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "linapro-demo-dynamic"), "linapro-demo-dynamic")
 
 	var stdout bytes.Buffer
 	application := newApp(&stdout, ioDiscard{}, strings.NewReader(""))
 	application.root = root
 
 	if err := runWasm(context.Background(), application, commandInput{
-		Params: map[string]string{"p": "plugin-demo-dynamic"},
+		Params: map[string]string{"p": "linapro-demo-dynamic"},
 	}); err != nil {
 		t.Fatalf("runWasm returned error: %v", err)
 	}
 
 	expected := filepath.Join(root, "temp", "output")
-	artifactPath := filepath.Join(expected, "plugin-demo-dynamic.wasm")
+	artifactPath := filepath.Join(expected, "linapro-demo-dynamic.wasm")
 	if !fileutil.FileExists(artifactPath) {
 		t.Fatalf("expected wasm artifact at %s", artifactPath)
 	}
@@ -831,8 +831,8 @@ func TestRunDevPassesRepositoryWasmOutputWhenPluginsEnabled(t *testing.T) {
 	writeFile(t, filepath.Join(root, "apps", "lina-core", "manifest", "sql", "001.sql"), "select 1;\n")
 	writeFile(t, filepath.Join(root, "apps", "lina-core", "manifest", "i18n", "en-US", "framework.json"), "{}\n")
 	writeFile(t, filepath.Join(pluginRoot, "go.mod"), "module lina-plugins\n")
-	writeFile(t, filepath.Join(pluginRoot, "plugin-demo-dynamic", "go.mod"), "module plugin-demo-dynamic\n")
-	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "plugin-demo-dynamic"), "plugin-demo-dynamic")
+	writeFile(t, filepath.Join(pluginRoot, "linapro-demo-dynamic", "go.mod"), "module linapro-demo-dynamic\n")
+	writeDynamicPluginManifest(t, filepath.Join(pluginRoot, "linapro-demo-dynamic"), "linapro-demo-dynamic")
 	if err := os.MkdirAll(filepath.Join(root, "apps", "lina-vben", "apps", "web-antd"), 0o755); err != nil {
 		t.Fatalf("mkdir frontend workdir: %v", err)
 	}
@@ -870,7 +870,7 @@ func TestRunDevPassesRepositoryWasmOutputWhenPluginsEnabled(t *testing.T) {
 		}
 	}
 	expected := filepath.Join(root, "temp", "output")
-	if !fileutil.FileExists(filepath.Join(expected, "plugin-demo-dynamic.wasm")) {
+	if !fileutil.FileExists(filepath.Join(expected, "linapro-demo-dynamic.wasm")) {
 		t.Fatalf("expected dev wasm artifact under %s", expected)
 	}
 }

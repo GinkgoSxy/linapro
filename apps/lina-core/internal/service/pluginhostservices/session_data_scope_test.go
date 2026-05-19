@@ -236,11 +236,6 @@ func (s sessionTenantScopeService) ResolveTenant(ctx context.Context, _ *ghttp.R
 	return &pkgtenantcap.ResolverResult{TenantID: s.Current(ctx), Matched: true}, nil
 }
 
-// ReadWithPlatformFallback is unused by pluginhostservices data-scope tests.
-func (s sessionTenantScopeService) ReadWithPlatformFallback(context.Context, tenantcapsvc.FallbackScanner[any]) ([]any, error) {
-	return nil, nil
-}
-
 // ApplyUserTenantScope is unused by pluginhostservices data-scope tests.
 func (s sessionTenantScopeService) ApplyUserTenantScope(_ context.Context, model *gdb.Model, _ string) (*gdb.Model, bool, error) {
 	return model, false, nil

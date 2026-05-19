@@ -820,11 +820,6 @@ func (disabledTenantAuthTestService) ListUserTenants(context.Context, int) ([]pk
 	return []pkgtenantcap.TenantInfo{}, nil
 }
 
-// ReadWithPlatformFallback returns no rows in disabled tenancy tests.
-func (disabledTenantAuthTestService) ReadWithPlatformFallback(context.Context, tenantcapsvc.FallbackScanner[any]) ([]any, error) {
-	return nil, nil
-}
-
 // ApplyUserTenantScope returns the model unchanged when tenancy is disabled.
 func (disabledTenantAuthTestService) ApplyUserTenantScope(
 	_ context.Context,
@@ -913,11 +908,6 @@ func (enabledTenantAuthTestService) ResolveTenant(context.Context, *ghttp.Reques
 // ListUserTenants returns no tenants in auth tests unless provider lookup is used directly.
 func (enabledTenantAuthTestService) ListUserTenants(context.Context, int) ([]pkgtenantcap.TenantInfo, error) {
 	return []pkgtenantcap.TenantInfo{}, nil
-}
-
-// ReadWithPlatformFallback returns no rows in auth tests.
-func (enabledTenantAuthTestService) ReadWithPlatformFallback(context.Context, tenantcapsvc.FallbackScanner[any]) ([]any, error) {
-	return nil, nil
 }
 
 // ApplyUserTenantScope returns the model unchanged in auth tests.

@@ -103,7 +103,7 @@ func (g menuTenantGuard) PlatformBypass(context.Context) bool {
 }
 
 // newMenuPlatformGuardTenantService creates a real tenantcap service in active
-// multi-tenant mode so menu mutation tests cover service entry points.
+// linapro-tenant-core mode so menu mutation tests cover service entry points.
 func newMenuPlatformGuardTenantService(t *testing.T) tenantcapsvc.Service {
 	t.Helper()
 	previousProvider := pkgtenantcap.CurrentProvider()
@@ -114,10 +114,10 @@ func newMenuPlatformGuardTenantService(t *testing.T) tenantcapsvc.Service {
 	return tenantcapsvc.New(menuPlatformGuardPluginState{}, bizctx.New())
 }
 
-// menuPlatformGuardPluginState marks the multi-tenant provider plugin enabled.
+// menuPlatformGuardPluginState marks the linapro-tenant-core provider plugin enabled.
 type menuPlatformGuardPluginState struct{}
 
-// IsEnabled reports the multi-tenant provider plugin as enabled.
+// IsEnabled reports the linapro-tenant-core provider plugin as enabled.
 func (menuPlatformGuardPluginState) IsEnabled(_ context.Context, pluginID string) bool {
 	return pluginID == pkgtenantcap.ProviderPluginID
 }

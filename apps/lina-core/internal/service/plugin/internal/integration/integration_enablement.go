@@ -79,7 +79,7 @@ func (s *serviceImpl) registryEnabledForTenant(ctx context.Context, registry *en
 	}
 	tenantID := datascope.CurrentTenantID(ctx)
 	// Platform-only describes tenant governance visibility, not runtime
-	// availability. Global platform-only plugins such as multi-tenant can still
+	// availability. Global platform-only plugins such as linapro-tenant-core can still
 	// publish tenant-context APIs and permissions while tenant administrators
 	// remain unable to control them through the tenant plugin list.
 	if catalog.NormalizeInstallMode(registry.InstallMode) != catalog.InstallModeTenantScoped || tenantID == datascope.PlatformTenantID {

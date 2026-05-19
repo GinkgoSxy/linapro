@@ -15,8 +15,8 @@ import {
 const apiBaseURL =
   process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:8080/api/v1/";
 
-const successPluginID = "lp-host-e2e";
-const deniedPluginID = "lp-host-denied-e2e";
+const successPluginID = "plugin-dev-lp-host-e2e";
+const deniedPluginID = "plugin-dev-lp-host-denied-e2e";
 
 type PluginListItem = {
   id: string;
@@ -465,7 +465,7 @@ func HandleRequest(
 
 function buildSuccessPluginSource() {
   const pluginDir = sourcePluginDir(successPluginID);
-  const moduleName = "lina-plugin-lp-host-e2e";
+  const moduleName = "lina-plugin-dev-lp-host-e2e";
   rmSync(pluginDir, { force: true, recursive: true });
 
   writeTestFile(
@@ -655,7 +655,7 @@ func (c *Controller) LowPriorityHostServices(request *pluginbridge.BridgeRequest
 
 function buildDeniedPluginSource() {
   const pluginDir = sourcePluginDir(deniedPluginID);
-  const moduleName = "lina-plugin-lp-host-denied-e2e";
+  const moduleName = "lina-plugin-dev-lp-host-denied-e2e";
   rmSync(pluginDir, { force: true, recursive: true });
 
   writeTestFile(

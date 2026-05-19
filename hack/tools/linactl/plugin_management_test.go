@@ -25,18 +25,18 @@ func TestValidatePluginConfigAcceptsStringItemsAndFilters(t *testing.T) {
 				Repo:  "https://example.com/custom.git",
 				Root:  "apps/lina-plugins",
 				Ref:   "main",
-				Items: []string{"content-notice"},
+				Items: []string{"linapro-content-notice"},
 			},
 			"official": {
 				Repo:  "https://example.com/official.git",
 				Root:  ".",
 				Ref:   "main",
-				Items: []string{"multi-tenant", "org-center"},
+				Items: []string{"linapro-tenant-core", "linapro-org-core"},
 			},
 		},
 	}
 
-	plan, err := plugins.ValidateConfig(cfg, commandInput{Params: map[string]string{"p": "org-center", "source": "official"}})
+	plan, err := plugins.ValidateConfig(cfg, commandInput{Params: map[string]string{"p": "linapro-org-core", "source": "official"}})
 	if err != nil {
 		t.Fatalf("plugins.ValidateConfig returned error: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestValidatePluginConfigAcceptsStringItemsAndFilters(t *testing.T) {
 		t.Fatalf("expected one filtered item, got %#v", plan.Items)
 	}
 	item := plan.Items[0]
-	if item.ID != "org-center" || item.Source != "official" || item.Root != "." {
+	if item.ID != "linapro-org-core" || item.Source != "official" || item.Root != "." {
 		t.Fatalf("unexpected filtered item: %#v", item)
 	}
 }
@@ -54,8 +54,8 @@ func TestValidatePluginConfigAcceptsStringItemsAndFilters(t *testing.T) {
 func TestValidatePluginConfigRejectsDuplicatePluginIDs(t *testing.T) {
 	cfg := config.Plugins{
 		Sources: map[string]config.PluginSource{
-			"a": {Repo: "repo-a", Root: ".", Ref: "main", Items: []string{"multi-tenant"}},
-			"b": {Repo: "repo-b", Root: ".", Ref: "main", Items: []string{"multi-tenant"}},
+			"a": {Repo: "repo-a", Root: ".", Ref: "main", Items: []string{"linapro-tenant-core"}},
+			"b": {Repo: "repo-b", Root: ".", Ref: "main", Items: []string{"linapro-tenant-core"}},
 		},
 	}
 
@@ -70,7 +70,7 @@ func TestValidatePluginConfigRejectsDuplicatePluginIDs(t *testing.T) {
 func TestValidatePluginConfigRejectsWildcardMixedWithExplicitIDs(t *testing.T) {
 	cfg := config.Plugins{
 		Sources: map[string]config.PluginSource{
-			"official": {Repo: "repo", Root: ".", Ref: "main", Items: []string{"*", "multi-tenant"}},
+			"official": {Repo: "repo", Root: ".", Ref: "main", Items: []string{"*", "linapro-tenant-core"}},
 		},
 	}
 
@@ -108,7 +108,7 @@ func TestLoadPluginPlanRejectsNonStringItems(t *testing.T) {
       root: "."
       ref: "main"
       items:
-        - id: multi-tenant
+        - id: linapro-tenant-core
 `)
 
 	_, err := plugins.LoadPlan(root, commandInput{})
@@ -227,11 +227,11 @@ func TestRunPluginsInitConvertsGitlinkAndPreservesFiles(t *testing.T) {
 func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 	root := newGitRepo(t)
 	source := newGitRepo(t)
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.1.0\n")
-	writeFile(t, filepath.Join(source, "multi-tenant", "README.md"), "v1\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "README.md"), "v1\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "initial plugin")
-	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"multi-tenant\"\n")
+	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"linapro-tenant-core\"\n")
 
 	var installOut bytes.Buffer
 	application := newApp(&installOut, ioDiscard{}, strings.NewReader(""))
@@ -239,21 +239,21 @@ func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 	if err := runPluginsInstall(context.Background(), application, commandInput{}); err != nil {
 		t.Fatalf("runPluginsInstall returned error: %v", err)
 	}
-	if !fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "multi-tenant", "plugin.yaml")) {
+	if !fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core", "plugin.yaml")) {
 		t.Fatalf("plugin was not installed")
 	}
 	for _, expected := range []string{
 		"Preparing plugin installation for 1 configured item(s)...",
 		"Installing 1 plugin(s)...",
 		"Downloading plugin source official",
-		"[1/1] installing plugin multi-tenant from official...",
-		"Installed plugin multi-tenant",
+		"[1/1] installing plugin linapro-tenant-core from official...",
+		"Installed plugin linapro-tenant-core",
 	} {
 		if !strings.Contains(installOut.String(), expected) {
 			t.Fatalf("expected install output to contain %q, got:\n%s", expected, installOut.String())
 		}
 	}
-	if fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "multi-tenant", ".git")) || !fileutil.FileExists(plugins.LockPath(root)) {
+	if fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core", ".git")) || !fileutil.FileExists(plugins.LockPath(root)) {
 		t.Fatalf("plugin metadata or lock state is incorrect")
 	}
 	runGit(t, root, "add", ".")
@@ -263,13 +263,13 @@ func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 		t.Fatalf("expected install to reject existing plugin, got %v", err)
 	}
 
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.2.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.2.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "update plugin")
 	if err := runPluginsUpdate(context.Background(), application, commandInput{}); err != nil {
 		t.Fatalf("runPluginsUpdate returned error: %v", err)
 	}
-	content, err := os.ReadFile(filepath.Join(root, "apps", "lina-plugins", "multi-tenant", "plugin.yaml"))
+	content, err := os.ReadFile(filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core", "plugin.yaml"))
 	if err != nil {
 		t.Fatalf("read updated plugin manifest: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 		"| Installed",
 		"| Dirty",
 		"| Remote",
-		"| multi-tenant",
+		"| linapro-tenant-core",
 		"| official",
 		"| 0.2.0",
 		"| true",
@@ -306,11 +306,11 @@ func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 
 	var filteredStatusOut bytes.Buffer
 	application.stdout = &filteredStatusOut
-	if err = runPluginsStatus(context.Background(), application, commandInput{Params: map[string]string{"p": "multi-tenant"}}); err != nil {
+	if err = runPluginsStatus(context.Background(), application, commandInput{Params: map[string]string{"p": "linapro-tenant-core"}}); err != nil {
 		t.Fatalf("filtered runPluginsStatus returned error: %v", err)
 	}
 	filteredOutput := filteredStatusOut.String()
-	if !strings.Contains(filteredOutput, "| multi-tenant") || !strings.Contains(filteredOutput, "| current") {
+	if !strings.Contains(filteredOutput, "| linapro-tenant-core") || !strings.Contains(filteredOutput, "| current") {
 		t.Fatalf("expected filtered status table to include current plugin row, got:\n%s", filteredOutput)
 	}
 	if strings.Contains(filteredOutput, "remote=current") {
@@ -323,8 +323,8 @@ func TestPluginsInstallUpdateAndStatusUseConfiguredSources(t *testing.T) {
 func TestPluginsInstallExpandsWildcardItems(t *testing.T) {
 	root := newGitRepo(t)
 	source := newGitRepo(t)
-	writeFile(t, filepath.Join(source, "plugins", "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.1.0\n")
-	writeFile(t, filepath.Join(source, "plugins", "org-center", "plugin.yaml"), "id: org-center\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "plugins", "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "plugins", "linapro-org-core", "plugin.yaml"), "id: linapro-org-core\nversion: 0.1.0\n")
 	writeFile(t, filepath.Join(source, "plugins", "not-plugin", "README.md"), "ignored\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "source plugins")
@@ -335,7 +335,7 @@ func TestPluginsInstallExpandsWildcardItems(t *testing.T) {
 	if err := runPluginsInstall(context.Background(), application, commandInput{}); err != nil {
 		t.Fatalf("runPluginsInstall returned error: %v", err)
 	}
-	for _, pluginID := range []string{"multi-tenant", "org-center"} {
+	for _, pluginID := range []string{"linapro-tenant-core", "linapro-org-core"} {
 		if !fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", pluginID, "plugin.yaml")) {
 			t.Fatalf("expected wildcard plugin %s to be installed", pluginID)
 		}
@@ -350,21 +350,21 @@ func TestPluginsInstallExpandsWildcardItems(t *testing.T) {
 func TestPluginsInstallWildcardHonorsPluginFilter(t *testing.T) {
 	root := newGitRepo(t)
 	source := newGitRepo(t)
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.1.0\n")
-	writeFile(t, filepath.Join(source, "org-center", "plugin.yaml"), "id: org-center\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "linapro-org-core", "plugin.yaml"), "id: linapro-org-core\nversion: 0.1.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "source plugins")
 	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"*\"\n")
 
 	application := newApp(ioDiscard{}, ioDiscard{}, strings.NewReader(""))
 	application.root = root
-	if err := runPluginsInstall(context.Background(), application, commandInput{Params: map[string]string{"p": "org-center"}}); err != nil {
+	if err := runPluginsInstall(context.Background(), application, commandInput{Params: map[string]string{"p": "linapro-org-core"}}); err != nil {
 		t.Fatalf("runPluginsInstall returned error: %v", err)
 	}
-	if !fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "org-center", "plugin.yaml")) {
+	if !fileutil.FileExists(filepath.Join(root, "apps", "lina-plugins", "linapro-org-core", "plugin.yaml")) {
 		t.Fatalf("expected filtered wildcard plugin to be installed")
 	}
-	if fileutil.DirExists(filepath.Join(root, "apps", "lina-plugins", "multi-tenant")) {
+	if fileutil.DirExists(filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core")) {
 		t.Fatalf("unexpected unfiltered wildcard plugin installed")
 	}
 }
@@ -374,10 +374,10 @@ func TestPluginsInstallWildcardHonorsPluginFilter(t *testing.T) {
 func TestRunPluginsUpdateRejectsLocalChangesUnlessForced(t *testing.T) {
 	root := newGitRepo(t)
 	source := newGitRepo(t)
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.1.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "initial plugin")
-	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"multi-tenant\"\n")
+	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"linapro-tenant-core\"\n")
 
 	application := newApp(ioDiscard{}, ioDiscard{}, strings.NewReader(""))
 	application.root = root
@@ -386,8 +386,8 @@ func TestRunPluginsUpdateRejectsLocalChangesUnlessForced(t *testing.T) {
 	}
 	runGit(t, root, "add", ".")
 	runGit(t, root, "commit", "-m", "install plugin")
-	writeFile(t, filepath.Join(root, "apps", "lina-plugins", "multi-tenant", "local.txt"), "local change\n")
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.2.0\n")
+	writeFile(t, filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core", "local.txt"), "local change\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.2.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "update plugin")
 
@@ -405,10 +405,10 @@ func TestRunPluginsUpdateRejectsLocalChangesUnlessForced(t *testing.T) {
 func TestRunPluginsUpdateRejectsCommittedLockDrift(t *testing.T) {
 	root := newGitRepo(t)
 	source := newGitRepo(t)
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.1.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.1.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "initial plugin")
-	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"multi-tenant\"\n")
+	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \""+filepath.ToSlash(source)+"\"\n      root: \".\"\n      ref: \"master\"\n      items:\n        - \"linapro-tenant-core\"\n")
 
 	application := newApp(ioDiscard{}, ioDiscard{}, strings.NewReader(""))
 	application.root = root
@@ -417,10 +417,10 @@ func TestRunPluginsUpdateRejectsCommittedLockDrift(t *testing.T) {
 	}
 	runGit(t, root, "add", ".")
 	runGit(t, root, "commit", "-m", "install plugin")
-	writeFile(t, filepath.Join(root, "apps", "lina-plugins", "multi-tenant", "local.txt"), "committed local change\n")
+	writeFile(t, filepath.Join(root, "apps", "lina-plugins", "linapro-tenant-core", "local.txt"), "committed local change\n")
 	runGit(t, root, "add", ".")
 	runGit(t, root, "commit", "-m", "local plugin customization")
-	writeFile(t, filepath.Join(source, "multi-tenant", "plugin.yaml"), "id: multi-tenant\nversion: 0.2.0\n")
+	writeFile(t, filepath.Join(source, "linapro-tenant-core", "plugin.yaml"), "id: linapro-tenant-core\nversion: 0.2.0\n")
 	runGit(t, source, "add", ".")
 	runGit(t, source, "commit", "-m", "update plugin")
 
@@ -434,7 +434,7 @@ func TestRunPluginsUpdateRejectsCommittedLockDrift(t *testing.T) {
 // when the plugin workspace is still a submodule.
 func TestPluginsStatusReportsSubmoduleWithoutMutating(t *testing.T) {
 	root := newGitRepo(t)
-	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \"https://example.com/plugins.git\"\n      root: \".\"\n      ref: \"main\"\n      items:\n        - \"multi-tenant\"\n")
+	writeFile(t, filepath.Join(root, "hack", "config.yaml"), "plugins:\n  sources:\n    official:\n      repo: \"https://example.com/plugins.git\"\n      root: \".\"\n      ref: \"main\"\n      items:\n        - \"linapro-tenant-core\"\n")
 	runGit(t, root, "update-index", "--add", "--cacheinfo", "160000,1111111111111111111111111111111111111111,apps/lina-plugins")
 
 	var stdout bytes.Buffer

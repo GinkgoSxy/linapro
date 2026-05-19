@@ -137,7 +137,7 @@ func (g pluginTenantGuard) PlatformBypass(context.Context) bool {
 }
 
 // newPluginPlatformGuardTenantService creates a real tenantcap service in
-// active multi-tenant mode for plugin facade entry-point tests.
+// active linapro-tenant-core mode for plugin facade entry-point tests.
 func newPluginPlatformGuardTenantService(t *testing.T) tenantcapsvc.Service {
 	t.Helper()
 	previousProvider := pkgtenantcap.CurrentProvider()
@@ -148,10 +148,10 @@ func newPluginPlatformGuardTenantService(t *testing.T) tenantcapsvc.Service {
 	return tenantcapsvc.New(pluginPlatformGuardPluginState{}, bizctx.New())
 }
 
-// pluginPlatformGuardPluginState marks the multi-tenant provider plugin enabled.
+// pluginPlatformGuardPluginState marks the linapro-tenant-core provider plugin enabled.
 type pluginPlatformGuardPluginState struct{}
 
-// IsEnabled reports the multi-tenant provider plugin as enabled.
+// IsEnabled reports the linapro-tenant-core provider plugin as enabled.
 func (pluginPlatformGuardPluginState) IsEnabled(_ context.Context, pluginID string) bool {
 	return pluginID == pkgtenantcap.ProviderPluginID
 }

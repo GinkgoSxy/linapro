@@ -8,129 +8,10 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 )
 
-// PluginType identifies the host plugin implementation family.
-type PluginType string
-
-// Supported plugin types.
-const (
-	PluginTypeSource  PluginType = "source"
-	PluginTypeDynamic PluginType = "dynamic"
-)
-
-// RuntimeState identifies whether discovered plugin files match effective state.
-type RuntimeState string
-
-// Supported plugin runtime-upgrade states.
-const (
-	RuntimeStateNormal         RuntimeState = "normal"
-	RuntimeStatePendingUpgrade RuntimeState = "pending_upgrade"
-	RuntimeStateAbnormal       RuntimeState = "abnormal"
-	RuntimeStateUpgradeRunning RuntimeState = "upgrade_running"
-	RuntimeStateUpgradeFailed  RuntimeState = "upgrade_failed"
-)
-
-// RuntimeAbnormalReason identifies why a plugin cannot be treated as normally upgradeable.
-type RuntimeAbnormalReason string
-
-// Supported runtime abnormal reasons.
-const (
-	RuntimeAbnormalReasonDiscoveredVersionLowerThanEffective RuntimeAbnormalReason = "discovered_version_lower_than_effective"
-	RuntimeAbnormalReasonVersionCompareFailed                RuntimeAbnormalReason = "version_compare_failed"
-)
-
-// RuntimeFailurePhase identifies the phase associated with the latest failure.
-type RuntimeFailurePhase string
-
-// Supported runtime upgrade failure phases.
-const (
-	RuntimeFailurePhaseRelease           RuntimeFailurePhase = "release"
-	RuntimeFailurePhaseBeforeUpgrade     RuntimeFailurePhase = "before_upgrade"
-	RuntimeFailurePhaseUpgradeCallback   RuntimeFailurePhase = "upgrade_callback"
-	RuntimeFailurePhaseSQL               RuntimeFailurePhase = "sql"
-	RuntimeFailurePhaseGovernance        RuntimeFailurePhase = "governance"
-	RuntimeFailurePhaseReleaseSwitch     RuntimeFailurePhase = "release_switch"
-	RuntimeFailurePhaseCacheInvalidation RuntimeFailurePhase = "cache_invalidation"
-)
-
-// ScopeNature defines how a plugin participates in tenant governance.
-type ScopeNature string
-
-// Supported plugin scope natures.
-const (
-	ScopeNaturePlatformOnly ScopeNature = "platform_only"
-	ScopeNatureTenantAware  ScopeNature = "tenant_aware"
-)
-
-// InstallMode defines how a tenant-aware plugin is enabled across tenants.
-type InstallMode string
-
-// Supported plugin install modes.
-const (
-	InstallModeGlobal       InstallMode = "global"
-	InstallModeTenantScoped InstallMode = "tenant_scoped"
-)
-
-// DependencyInstallMode defines how a missing dependency may be installed.
-type DependencyInstallMode string
-
-// Supported dependency install modes.
-const (
-	DependencyInstallModeManual DependencyInstallMode = "manual"
-	DependencyInstallModeAuto   DependencyInstallMode = "auto"
-)
-
-// AuthorizationStatus identifies host-service authorization review state.
-type AuthorizationStatus string
-
-// Supported host-service authorization states.
-const (
-	AuthorizationStatusNotRequired AuthorizationStatus = "not_required"
-	AuthorizationStatusPending     AuthorizationStatus = "pending"
-	AuthorizationStatusConfirmed   AuthorizationStatus = "confirmed"
-)
-
-// DependencyStatus identifies one plugin dependency edge state.
-type DependencyStatus string
-
-// Supported dependency edge states.
-const (
-	DependencyStatusSatisfied             DependencyStatus = "satisfied"
-	DependencyStatusAutoInstallPlanned    DependencyStatus = "auto_install_planned"
-	DependencyStatusManualInstallRequired DependencyStatus = "manual_install_required"
-	DependencyStatusMissing               DependencyStatus = "missing"
-	DependencyStatusVersionUnsatisfied    DependencyStatus = "version_unsatisfied"
-	DependencyStatusSoftUnsatisfied       DependencyStatus = "soft_unsatisfied"
-)
-
-// FrameworkStatus identifies framework-version compatibility.
-type FrameworkStatus string
-
-// Supported framework compatibility states.
-const (
-	FrameworkStatusNotDeclared FrameworkStatus = "not_declared"
-	FrameworkStatusSatisfied   FrameworkStatus = "satisfied"
-	FrameworkStatusUnsatisfied FrameworkStatus = "unsatisfied"
-)
-
-// BlockerCode identifies one plugin dependency check failure category.
-type BlockerCode string
-
-// Supported dependency blocker categories.
-const (
-	BlockerCodeFrameworkVersionUnsatisfied  BlockerCode = "framework_version_unsatisfied"
-	BlockerCodeDependencyMissing            BlockerCode = "dependency_missing"
-	BlockerCodeDependencyVersionUnsatisfied BlockerCode = "dependency_version_unsatisfied"
-	BlockerCodeDependencyManualRequired     BlockerCode = "dependency_manual_install_required"
-	BlockerCodeDependencyCycle              BlockerCode = "dependency_cycle"
-	BlockerCodeDependencySnapshotUnknown    BlockerCode = "dependency_snapshot_unknown"
-	BlockerCodeReverseDependency            BlockerCode = "reverse_dependency"
-	BlockerCodeReverseDependencyVersion     BlockerCode = "reverse_dependency_version"
-)
-
 // ListReq is the request for querying plugin list.
 type ListReq struct {
 	g.Meta    `path:"/plugins" method:"get" tags:"Plugin Management" summary:"Query plugin list" permission:"plugin:query" dc:"Scan the source plugin directory and synchronize the basic status of the plugin, and return the plugin list and activation status"`
-	Id        string                   `json:"id" dc:"Filter by the unique identifier of the plugin, fuzzy matching, query all if not passed" eg:"plugin-demo-source"`
+	Id        string                   `json:"id" dc:"Filter by the unique identifier of the plugin, fuzzy matching, query all if not passed" eg:"linapro-demo-source"`
 	Name      string                   `json:"name" dc:"Filter by plugin name, fuzzy match, query all if not passed" eg:"Source Plugin Demo"`
 	Type      PluginType               `json:"type" dc:"Filter by plugin type: source=source plugin dynamic=dynamic plugin, if not passed, all will be queried; the current dynamic plugin implementation only supports WASM" eg:"dynamic"`
 	Status    *statusflag.Enabled      `json:"status" dc:"Filter by enabled status: 1=enabled 0=disabled, if not passed, query all" eg:"1"`
@@ -145,7 +26,7 @@ type ListRes struct {
 
 // PluginItem represents plugin information.
 type PluginItem struct {
-	Id                      string                       `json:"id" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	Id                      string                       `json:"id" dc:"Plugin unique identifier" eg:"linapro-demo-source"`
 	Name                    string                       `json:"name" dc:"Plugin name" eg:"Source Plugin Demo"`
 	Version                 string                       `json:"version" dc:"Plugin current manifest version number" eg:"v0.1.0"`
 	RuntimeState            RuntimeState                 `json:"runtimeState" dc:"Plugin runtime upgrade state: normal, pending_upgrade, abnormal, upgrade_running, or upgrade_failed" eg:"pending_upgrade"`
@@ -164,7 +45,7 @@ type PluginItem struct {
 	SupportsMultiTenant     bool                         `json:"supportsMultiTenant" dc:"Whether the plugin manifest declares support for tenant-level plugin governance" eg:"true"`
 	ScopeNature             ScopeNature                  `json:"scopeNature" dc:"Plugin scope nature: platform_only or tenant_aware" eg:"tenant_aware"`
 	InstallMode             InstallMode                  `json:"installMode" dc:"Plugin install mode: global or tenant_scoped" eg:"tenant_scoped"`
-	StatusKey               string                       `json:"statusKey" dc:"The location key name of the plugin status in the system plugin registry. The frontend registry monitor will use this key to determine whether the plugin status needs to be refreshed." eg:"sys_plugin.status:plugin-demo-source"`
+	StatusKey               string                       `json:"statusKey" dc:"The location key name of the plugin status in the system plugin registry. The frontend registry monitor will use this key to determine whether the plugin status needs to be refreshed." eg:"sys_plugin.status:linapro-demo-source"`
 	UpdatedAt               *int64                       `json:"updatedAt" dc:"Plugin registry last updated time as Unix timestamp in milliseconds" eg:"1767240000000"`
 	AuthorizationRequired   statusflag.YesNo             `json:"authorizationRequired" dc:"Whether there is a hostServices resource application that needs to be confirmed during installation/activation: 1=Yes 0=No" eg:"1"`
 	AuthorizationStatus     AuthorizationStatus          `json:"authorizationStatus" dc:"Current authorization status: not_required=no confirmation required pending=to be confirmed confirmed=confirmed" eg:"confirmed"`
@@ -187,7 +68,7 @@ type PluginUpgradeFailureItem struct {
 
 // PluginDependencyCheckResult describes one server-side plugin dependency decision.
 type PluginDependencyCheckResult struct {
-	TargetId              string                              `json:"targetId" dc:"Checked plugin ID" eg:"plugin-demo-dynamic"`
+	TargetId              string                              `json:"targetId" dc:"Checked plugin ID" eg:"linapro-demo-dynamic"`
 	Framework             PluginDependencyFrameworkCheck      `json:"framework" dc:"Framework compatibility check result" eg:"{}"`
 	Dependencies          []*PluginDependencyItem             `json:"dependencies" dc:"Direct and transitive plugin dependency checks" eg:"[]"`
 	AutoInstallPlan       []*PluginDependencyAutoInstallItem  `json:"autoInstallPlan" dc:"Dependency plugins that will be installed automatically before the target" eg:"[]"`
@@ -209,8 +90,8 @@ type PluginDependencyFrameworkCheck struct {
 
 // PluginDependencyItem describes one plugin dependency edge.
 type PluginDependencyItem struct {
-	OwnerId         string                `json:"ownerId" dc:"Plugin declaring the dependency" eg:"plugin-demo-dynamic"`
-	DependencyId    string                `json:"dependencyId" dc:"Depended-on plugin ID" eg:"plugin-demo-source"`
+	OwnerId         string                `json:"ownerId" dc:"Plugin declaring the dependency" eg:"linapro-demo-dynamic"`
+	DependencyId    string                `json:"dependencyId" dc:"Depended-on plugin ID" eg:"linapro-demo-source"`
 	DependencyName  string                `json:"dependencyName" dc:"Depended-on plugin display name" eg:"Source Plugin Demo"`
 	RequiredVersion string                `json:"requiredVersion" dc:"Declared dependency version range" eg:">=0.1.0"`
 	CurrentVersion  string                `json:"currentVersion" dc:"Discovered or installed dependency version" eg:"v0.1.0"`
@@ -224,18 +105,18 @@ type PluginDependencyItem struct {
 
 // PluginDependencyAutoInstallItem describes one automatic dependency install.
 type PluginDependencyAutoInstallItem struct {
-	PluginId   string   `json:"pluginId" dc:"Dependency plugin ID" eg:"plugin-demo-source"`
+	PluginId   string   `json:"pluginId" dc:"Dependency plugin ID" eg:"linapro-demo-source"`
 	Name       string   `json:"name" dc:"Dependency plugin display name" eg:"Source Plugin Demo"`
 	Version    string   `json:"version" dc:"Dependency version to install" eg:"v0.1.0"`
-	RequiredBy string   `json:"requiredBy" dc:"Direct parent plugin requesting the dependency" eg:"plugin-demo-dynamic"`
+	RequiredBy string   `json:"requiredBy" dc:"Direct parent plugin requesting the dependency" eg:"linapro-demo-dynamic"`
 	Chain      []string `json:"chain,omitempty" dc:"Dependency chain leading to this plan item" eg:"[]"`
 }
 
 // PluginDependencyBlocker describes one hard dependency failure.
 type PluginDependencyBlocker struct {
 	Code            BlockerCode `json:"code" dc:"Blocker category" eg:"dependency_missing"`
-	PluginId        string      `json:"pluginId" dc:"Plugin whose lifecycle is blocked" eg:"plugin-demo-dynamic"`
-	DependencyId    string      `json:"dependencyId" dc:"Dependency plugin when applicable" eg:"plugin-demo-source"`
+	PluginId        string      `json:"pluginId" dc:"Plugin whose lifecycle is blocked" eg:"linapro-demo-dynamic"`
+	DependencyId    string      `json:"dependencyId" dc:"Dependency plugin when applicable" eg:"linapro-demo-source"`
 	RequiredVersion string      `json:"requiredVersion" dc:"Declared version range when applicable" eg:">=0.1.0"`
 	CurrentVersion  string      `json:"currentVersion" dc:"Observed version when applicable" eg:"v0.1.0"`
 	Chain           []string    `json:"chain,omitempty" dc:"Dependency chain associated with this blocker" eg:"[]"`
@@ -244,8 +125,25 @@ type PluginDependencyBlocker struct {
 
 // PluginDependencyReverseDependent describes one installed downstream dependency.
 type PluginDependencyReverseDependent struct {
-	PluginId        string `json:"pluginId" dc:"Downstream plugin ID" eg:"content-notice"`
+	PluginId        string `json:"pluginId" dc:"Downstream plugin ID" eg:"linapro-content-notice"`
 	Name            string `json:"name" dc:"Downstream plugin display name" eg:"Content Notice"`
 	Version         string `json:"version" dc:"Downstream plugin version" eg:"v0.1.0"`
 	RequiredVersion string `json:"requiredVersion" dc:"Version range declared by downstream plugin" eg:">=0.1.0"`
+}
+
+// PluginRouteReviewItem describes one dynamic route exposed by the current
+// plugin release during install or enable review.
+type PluginRouteReviewItem struct {
+	// Method is the normalized HTTP method declared by the dynamic route.
+	Method string `json:"method" dc:"Dynamic routing HTTP methods" eg:"GET"`
+	// PublicPath is the host-visible public URL served for this dynamic route.
+	PublicPath string `json:"publicPath" dc:"The real public path of the host, always starts with /api/v1/extensions/{pluginId}/" eg:"/api/v1/extensions/linapro-demo-dynamic/review-summary"`
+	// Access identifies whether the route is public or requires login context.
+	Access string `json:"access" dc:"Access level: public=public access login=login access" eg:"login"`
+	// Permission is the host permission key enforced for authenticated routes.
+	Permission string `json:"permission,omitempty" dc:"Host permission identifier; public route returns empty string" eg:"linapro-demo-dynamic:review:query"`
+	// Summary is the short review-friendly route summary.
+	Summary string `json:"summary,omitempty" dc:"Dynamic routing summary, derived from the summary in the routing contract" eg:"Query plugin review summary"`
+	// Description is the detailed business description declared by the route.
+	Description string `json:"description,omitempty" dc:"Dynamic routing description, from description in routing contract" eg:"Returns the review summary information generated by the current version of the dynamic plugin"`
 }

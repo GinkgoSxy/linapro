@@ -13,11 +13,11 @@ const apiBaseURL =
   process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:8080/api/v1/";
 const publicBaseURL =
   process.env.E2E_PUBLIC_BASE_URL ?? apiBaseURL.replace(/\/api\/v1\/?$/, "");
-const pluginID = "demo-control";
-const lifecyclePluginID = "plugin-demo-source";
+const pluginID = "linapro-ops-demo-guard";
+const lifecyclePluginID = "linapro-demo-source";
 const demoControlMessage = "演示模式已开启，禁止执行写操作";
 const demoControlSkipReason =
-  "requires demo-control to be installed and enabled";
+  "requires linapro-ops-demo-guard to be installed and enabled";
 
 type PluginListItem = {
   autoEnableManaged?: number;
@@ -118,7 +118,7 @@ async function expectPluginState(
   );
 }
 
-test.describe("TC-105 demo-control 全局只读保护", () => {
+test.describe("TC-105 linapro-ops-demo-guard 全局只读保护", () => {
   let adminApi: APIRequestContext;
   let demoControlEnabled = false;
   let demoControlAutoEnableManaged = false;
@@ -147,7 +147,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
     await adminApi.dispose();
   });
 
-  test("TC-105a: 插件管理页展示 demo-control 已启用，并在 autoEnable 托管时显示对应提示", async ({
+  test("TC-105a: 插件管理页展示 linapro-ops-demo-guard 已启用，并在 autoEnable 托管时显示对应提示", async ({
     adminPage,
   }) => {
     test.skip(!demoControlEnabled, demoControlSkipReason);
@@ -205,7 +205,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
       const tenants = login?.tenants ?? [];
       test.skip(
         !login?.preToken || tenants.length < 2,
-        "requires multi-tenant mock user tenant_alpha_ops with multiple active tenants",
+        "requires linapro-tenant-core mock user tenant_alpha_ops with multiple active tenants",
       );
 
       const preToken = login?.preToken ?? "";
@@ -287,7 +287,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
         data: {
           key: "e2e.demo.control.blocked",
           name: "E2E Demo Control Blocked",
-          remark: "should be blocked by demo-control",
+          remark: "should be blocked by linapro-ops-demo-guard",
           value: "1",
         },
       }),
@@ -299,7 +299,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
         data: {
           key: "e2e.demo.control.blocked",
           name: "E2E Demo Control Blocked",
-          remark: "should be blocked by demo-control",
+          remark: "should be blocked by linapro-ops-demo-guard",
           value: "2",
         },
       }),
@@ -329,7 +329,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
       await expectDemoControlRejected(
         await publicRequest.post("/", {
           data: {
-            probe: "demo-control-root-scope",
+            probe: "linapro-ops-demo-guard-root-scope",
           },
         }),
         "POST / 应被全局作用域拦截",
@@ -367,7 +367,7 @@ test.describe("TC-105 demo-control 全局只读保护", () => {
       },
       {
         request: () => adminApi.put(`plugins/${pluginID}/disable`),
-        message: "demo-control 自身禁用请求应被拦截",
+        message: "linapro-ops-demo-guard 自身禁用请求应被拦截",
       },
     ];
 

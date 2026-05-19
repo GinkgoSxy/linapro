@@ -46,7 +46,7 @@ func organizationCapabilityStateFromPermissionFilter(permissionFilter Permission
 	return nil
 }
 
-// Enabled reports whether org-center is enabled and the orgcap provider exists.
+// Enabled reports whether linapro-org-core is enabled and the orgcap provider exists.
 func (s pluginBackedOrganizationCapabilityState) Enabled(ctx context.Context) bool {
 	return s.pluginState != nil &&
 		s.pluginState.IsEnabled(ctx, orgcap.ProviderPluginID) &&

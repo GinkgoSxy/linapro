@@ -9,7 +9,7 @@ cd hack/tools/linactl
 go run . help
 go run . status
 go run . pack.assets
-go run . wasm p=plugin-demo-dynamic
+go run . wasm p=linapro-demo-dynamic
 go run . wasm plugin_dir=/path/to/plugin out=temp/output
 go run . plugins.status
 go run . i18n.check
@@ -58,7 +58,7 @@ In PowerShell, run it with an explicit current-directory prefix:
 | `plugins` | `plugins=0` | Overrides automatic plugin-full detection for build, dev, image, and Go test commands. |
 | `tag` | `tag=v0.2.0` | Selects the release tag checked by `release.tag.check`. |
 | `print-version` | `print-version=1` | Prints the validated `framework.version` for release automation. |
-| `p` | `p=multi-tenant` | Selects one plugin for Wasm build or plugin workspace management commands. |
+| `p` | `p=linapro-tenant-core` | Selects one plugin for Wasm build or plugin workspace management commands. |
 | `plugin-dir` | `plugin_dir=/path/to/plugin` | Builds one dynamic plugin artifact from an explicit source directory. |
 | `out` | `out=temp/output` | Selects the dynamic plugin artifact output directory. |
 | `source` | `source=official` | Selects one configured plugin source for plugin workspace management commands. |
@@ -74,7 +74,7 @@ When `plugins` is omitted, build and dev commands enable plugin-full mode if `ap
 ```bash
 make image tag=v0.2.0 push=0
 make image.build tag=v0.2.0
-make wasm p=plugin-demo-dynamic
+make wasm p=linapro-demo-dynamic
 ```
 
 Use `plugin_dir=<path>` when a test or local fixture needs to package a dynamic plugin outside `apps/lina-plugins`.
@@ -114,8 +114,8 @@ plugins:
       root: "."
       ref: "main"
       items:
-        - "multi-tenant"
-        - "org-center"
+        - "linapro-tenant-core"
+        - "linapro-org-core"
 ```
 
 `items` only accepts plugin ID strings. Use the quoted string `"*"` to install every plugin directory directly under the source `root`; do not write bare `- *` because YAML treats it as alias syntax. If plugins from the same repository need different refs, split them into separate sources.
@@ -125,7 +125,7 @@ Common commands:
 ```bash
 make plugins.init
 make plugins.install
-make plugins.install p=multi-tenant
+make plugins.install p=linapro-tenant-core
 make plugins.update source=official
 make plugins.update force=1
 make plugins.status

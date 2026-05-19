@@ -31,7 +31,7 @@ func TestTouchDynamicRouteSessionKeepsExistingSessionWhenTimestampDoesNotChange(
 		ctx      = context.Background()
 		service  = &serviceImpl{sessionStore: session.NewDBStore()}
 		tenantID = 17
-		tokenID  = fmt.Sprintf("plugin-dynamic-route-session-%d", time.Now().UnixNano())
+		tokenID  = fmt.Sprintf("plugin-dev-dynamic-route-session-%d", time.Now().UnixNano())
 	)
 
 	if _, err := dao.SysOnlineSession.Ctx(ctx).
@@ -101,10 +101,10 @@ func TestDynamicRouteIdentitySnapshotFiltersRolesByTokenTenant(t *testing.T) {
 		tenantAID    = 61001
 		tenantBID    = 61002
 		actingUserID = 9001
-		tokenID      = fmt.Sprintf("plugin-dynamic-route-tenant-token-%d", time.Now().UnixNano())
-		tenantAPerm  = fmt.Sprintf("plugin-dynamic-route:tenant-a:%d", time.Now().UnixNano())
-		tenantBPerm  = fmt.Sprintf("plugin-dynamic-route:tenant-b:%d", time.Now().UnixNano())
-		platformPerm = fmt.Sprintf("plugin-dynamic-route:platform:%d", time.Now().UnixNano())
+		tokenID      = fmt.Sprintf("plugin-dev-dynamic-route-tenant-token-%d", time.Now().UnixNano())
+		tenantAPerm  = fmt.Sprintf("plugin-dev-dynamic-route:tenant-a:%d", time.Now().UnixNano())
+		tenantBPerm  = fmt.Sprintf("plugin-dev-dynamic-route:tenant-b:%d", time.Now().UnixNano())
+		platformPerm = fmt.Sprintf("plugin-dev-dynamic-route:platform:%d", time.Now().UnixNano())
 	)
 	var (
 		userID  int
@@ -438,7 +438,7 @@ func signDynamicRouteImpersonationTestToken(
 // bearer token.
 func buildDynamicRouteAccessTestRequest(tokenString string) *ghttp.Request {
 	request := &ghttp.Request{}
-	request.Request = httptest.NewRequest(http.MethodGet, RoutePublicPrefix+"/plugin-dynamic-route/access", nil)
+	request.Request = httptest.NewRequest(http.MethodGet, RoutePublicPrefix+"/plugin-dev-dynamic-route/access", nil)
 	request.Header.Set("Authorization", "Bearer "+tokenString)
 	return request
 }

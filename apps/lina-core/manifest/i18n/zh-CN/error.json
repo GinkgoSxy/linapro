@@ -728,6 +728,9 @@
           }
         }
       },
+      "id": {
+        "invalid": "插件 ID {pluginId} 无效：{reason}"
+      },
       "not": {
         "found": "插件不存在：{pluginId}",
         "installed": "插件未安装"

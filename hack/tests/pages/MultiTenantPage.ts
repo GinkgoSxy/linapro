@@ -255,7 +255,7 @@ export class MultiTenantPage {
               "PluginMultiTenantPlatformTenants",
               "/platform/tenants",
               "#/views/system/plugin/dynamic-page",
-              "plugin.multi-tenant.menu.platform.tenants.name",
+              "plugin.linapro-tenant-core.menu.platform.tenants.name",
             ),
           ],
           15,
@@ -414,17 +414,17 @@ export class MultiTenantPage {
                     {
                       enabled: 1,
                       generation: 1,
-                      id: "multi-tenant",
+                      id: "linapro-tenant-core",
                       installed: 1,
-                      statusKey: "sys_plugin.status:multi-tenant",
+                      statusKey: "sys_plugin.status:linapro-tenant-core",
                       version: "v0.1.0",
                     },
                     {
                       enabled: 1,
                       generation: 1,
-                      id: "org-center",
+                      id: "linapro-org-core",
                       installed: 1,
-                      statusKey: "sys_plugin.status:org-center",
+                      statusKey: "sys_plugin.status:linapro-org-core",
                       version: "v0.1.0",
                     },
                   ],
@@ -626,8 +626,8 @@ export class MultiTenantPage {
           ok({
             list: [
               {
-                id: "org-center",
-                pluginId: "org-center",
+                id: "linapro-org-core",
+                pluginId: "linapro-org-core",
                 installed: 0,
                 enabled: 0,
                 status: 0,

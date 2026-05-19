@@ -17,13 +17,14 @@
 
 - [x] **FB-1**: 部分 API 响应直接嵌入数据库实体，响应合同被数据库结构驱动，并可能暴露密码、软删除字段、文件存储路径、哈希、租户内部字段等实现细节；应改为独立响应 DTO 并只映射允许暴露的字段
 - [x] **FB-2**: 源码插件 API DTO 仍存在 `*Entity` 命名、`*_entity.go` 存放方式、软删除字段暴露和操作日志列表返回完整请求/响应载荷等合同治理缺口；应统一改为插件 API 主源码文件中的独立响应 DTO，并只暴露必要字段
+- [x] **FB-3**: `apps/lina-plugins` 聚合根目录存在源码插件 API 契约单测，测试所有权未闭环到各插件；应迁移到各插件自身测试目录，并保证聚合根目录不再存在任何 `_test.go`
 
 ## Impact Assessment
 
 - i18n：已删除文件详情页 `engine`、`hash` 运行时翻译键，并同步清理用户/文件 apidoc i18n 中响应侧不再暴露的 `password`、`path`、`engine`、`hash` 字段翻译；请求侧密码、文件访问路径翻译保留。源码插件侧同步清理 `deletedAt` 和旧 `*Entity` 响应 schema 的 apidoc 翻译键，并将多租户插件 apidoc 键同步改为 `*Item` DTO 名；操作日志详情仍保留 `operParam/jsonResult` 文档，列表响应不再暴露这两个大字段。
 - 缓存一致性：不新增或修改缓存、缓存键、缓存失效、跨实例广播或分布式协调逻辑。
 - 数据权限：不改变查询、详情、下载、写操作或数据权限过滤逻辑；本次只调整 API 合同与响应边界字段映射。
-- 开发工具与脚本：不新增或修改开发工具、构建脚本、测试脚本或跨平台入口。
+- 开发工具与脚本：不新增或修改开发工具、构建脚本、测试脚本或跨平台入口；FB-3 仅迁移单元测试所有权，删除 `apps/lina-plugins` 聚合根目录测试入口，插件验证改为各插件模块内闭环执行。
 
 ## Verification
 
@@ -32,12 +33,16 @@
 - `cd apps/lina-vben && pnpm -F @lina/web-antd i18n:check`
 - `rg -n "internal/model/entity|entity\\." apps/lina-core/api -g '*.go'`
 - `rg -n "internal/model/entity|entity\\." apps/lina-plugins/*/backend/api apps/lina-core/api -g '*.go'`
-- `cd apps/lina-plugins && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test -run 'TestPluginAPI|TestPluginResponseDTOs|TestPluginOperLog' -count=1 .`
-- `cd apps/lina-plugins/content-notice && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test ./backend/api/... ./backend/internal/controller/...`
-- `cd apps/lina-plugins/org-center && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test ./backend/api/... ./backend/internal/controller/...`
-- `cd apps/lina-plugins/monitor-loginlog && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test ./backend/api/... ./backend/internal/controller/...`
-- `cd apps/lina-plugins/monitor-operlog && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test ./backend/api/... ./backend/internal/controller/...`
-- `cd apps/lina-plugins/multi-tenant && GOWORK=/Users/john/Workspace/github/linaproai/linapro/temp/go.work.plugins GOFLAGS=-mod=readonly go test ./backend/api/... ./backend/internal/controller/...`
-- `rg -n "deletedAt|NoticeEntity|DeptEntity|PostEntity|LoginLogEntity|OperLogEntity|TenantEntity|LoginTenantEntity|TenantPluginEntity|internal/model/entity|type\\s+\\w*Entity\\b" apps/lina-plugins/*/backend/api apps/lina-plugins/*/manifest/i18n -g '*.go' -g '*.json'`
+- `cd apps/lina-plugins/linapro-content-notice && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-demo-dynamic && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-demo-source && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-monitor-loginlog && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-monitor-online && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-monitor-operlog && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-monitor-server && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-org-core && GOWORK=off go test ./backend/api/... -count=1`
+- `cd apps/lina-plugins/linapro-tenant-core && GOWORK=off go test ./backend/api/... -count=1`
+- `find apps/lina-plugins -maxdepth 1 -type f -name '*_test.go' -print`
+- `rg -n "deletedAt|NoticeEntity|DeptEntity|PostEntity|LoginLogEntity|OperLogEntity|TenantEntity|LoginTenantEntity|TenantPluginEntity|internal/model/entity|type\\s+\\w*Entity\\b" apps/lina-plugins/*/backend/api apps/lina-plugins/*/manifest/i18n -g '*.go' -g '*.json' -g '!**/*_test.go'`
 - `openspec validate harden-api-response-dtos --strict`
 - `git diff --check`

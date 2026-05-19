@@ -60,7 +60,7 @@ type httpRuntime struct {
 	orgCapSvc       orgcap.Service          // orgCapSvc exposes optional organization capability.
 	roleSvc         role.Service            // roleSvc owns permission and access snapshot state.
 	sessionStore    session.Store           // sessionStore owns online-session persistence and hot state.
-	tenantSvc       tenantcapsvc.Service    // tenantSvc exposes optional multi-tenant capability.
+	tenantSvc       tenantcapsvc.Service    // tenantSvc exposes optional linapro-tenant-core capability.
 	kvCacheSvc      kvcache.Service         // kvCacheSvc owns runtime-selected KV backend.
 	hostServices    pluginhost.HostServices // hostServices publishes runtime-owned adapters to source plugins.
 	dictSvc         dict.Service            // dictSvc owns dictionary lookup and maintenance.

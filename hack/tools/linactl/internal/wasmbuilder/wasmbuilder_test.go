@@ -17,7 +17,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-builder\nname: Dynamic Builder\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: true\ndefault_install_mode: tenant_scoped\ndescription: standalone builder test\ndependencies:\n  framework:\n    version: \">=0.1.0 <1.0.0\"\n  plugins:\n    - id: multi-tenant\n      version: \">=0.1.0\"\n      install: auto\nhostServices:\n  - service: runtime\n    methods:\n      - log.write\n      - state.get\n      - state.set\n",
+		"id: plugin-dev-dynamic-builder\nname: Dynamic Builder\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: true\ndefault_install_mode: tenant_scoped\ndescription: standalone builder test\ndependencies:\n  framework:\n    version: \">=0.1.0 <1.0.0\"\n  plugins:\n    - id: linapro-tenant-core\n      version: \">=0.1.0\"\n      install: auto\nhostServices:\n  - service: runtime\n    methods:\n      - log.write\n      - state.get\n      - state.set\n",
 	)
 	mustWriteFile(
 		t,
@@ -26,22 +26,22 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	)
 	mustWriteFile(
 		t,
-		filepath.Join(pluginDir, "manifest", "sql", "001-plugin-dynamic-builder.sql"),
+		filepath.Join(pluginDir, "manifest", "sql", "001-plugin-dev-dynamic-builder.sql"),
 		"SELECT 1;",
 	)
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "manifest", "i18n", "en-US", "plugin.json"),
-		"{\n  \"plugin.plugin-dynamic-builder.name\": \"Dynamic Builder\"\n}\n",
+		"{\n  \"plugin.plugin-dev-dynamic-builder.name\": \"Dynamic Builder\"\n}\n",
 	)
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "manifest", "i18n", "zh-CN", "apidoc", "plugin-api-main.json"),
-		"{\n  \"plugins.plugin_dynamic_builder.paths.get.review_summary.meta.summary\": \"查询摘要\"\n}\n",
+		"{\n  \"plugins.plugin_dev_dynamic_builder.paths.get.review_summary.meta.summary\": \"查询摘要\"\n}\n",
 	)
 	mustWriteFile(
 		t,
-		filepath.Join(pluginDir, "manifest", "sql", "uninstall", "001-plugin-dynamic-builder.sql"),
+		filepath.Join(pluginDir, "manifest", "sql", "uninstall", "001-plugin-dev-dynamic-builder.sql"),
 		"SELECT 2;",
 	)
 	mustWriteFile(
@@ -67,7 +67,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "backend", "api", "dynamic", "v1", "review_summary.go"),
-		"package v1\n\nimport \"github.com/gogf/gf/v2/frame/g\"\n\ntype ReviewSummaryReq struct {\n\tg.Meta `path:\"/review-summary\" method:\"get\" tags:\"动态插件示例\" summary:\"查询摘要\" dc:\"返回一个动态插件摘要\" access:\"login\" permission:\"plugin-dynamic-builder:review:view\" operLog:\"other\"`\n}\n",
+		"package v1\n\nimport \"github.com/gogf/gf/v2/frame/g\"\n\ntype ReviewSummaryReq struct {\n\tg.Meta `path:\"/review-summary\" method:\"get\" tags:\"动态插件示例\" summary:\"查询摘要\" dc:\"返回一个动态插件摘要\" access:\"login\" permission:\"plugin-dev-dynamic-builder:review:view\" operLog:\"other\"`\n}\n",
 	)
 	mustWriteFile(
 		t,
@@ -94,7 +94,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 			_ = os.RemoveAll(filepath.Dir(out.RuntimePath))
 		})
 	}
-	if expected := filepath.Join(pluginDir, "temp", "plugin-dynamic-builder.wasm"); out.ArtifactPath != expected {
+	if expected := filepath.Join(pluginDir, "temp", "plugin-dev-dynamic-builder.wasm"); out.ArtifactPath != expected {
 		t.Fatalf("expected artifact path %s, got %s", expected, out.ArtifactPath)
 	}
 
@@ -107,8 +107,8 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionManifest], manifest); err != nil {
 		t.Fatalf("expected manifest section json to unmarshal, got error: %v", err)
 	}
-	if manifest.ID != "plugin-dynamic-builder" {
-		t.Fatalf("expected embedded manifest id plugin-dynamic-builder, got %s", manifest.ID)
+	if manifest.ID != "plugin-dev-dynamic-builder" {
+		t.Fatalf("expected embedded manifest id plugin-dev-dynamic-builder, got %s", manifest.ID)
 	}
 	if manifest.ScopeNature != pluginScopeNatureTenantAware {
 		t.Fatalf("expected embedded scope nature tenant_aware, got %s", manifest.ScopeNature)
@@ -128,7 +128,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	if len(manifest.Dependencies.Plugins) != 1 {
 		t.Fatalf("expected one embedded plugin dependency, got %#v", manifest.Dependencies.Plugins)
 	}
-	if manifest.Dependencies.Plugins[0].ID != "multi-tenant" || manifest.Dependencies.Plugins[0].Install != "auto" {
+	if manifest.Dependencies.Plugins[0].ID != "linapro-tenant-core" || manifest.Dependencies.Plugins[0].Install != "auto" {
 		t.Fatalf("unexpected embedded plugin dependency: %#v", manifest.Dependencies.Plugins[0])
 	}
 	if manifest.Dependencies.Plugins[0].Required == nil || !*manifest.Dependencies.Plugins[0].Required {
@@ -155,7 +155,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionI18N], &i18n); err != nil {
 		t.Fatalf("expected i18n section json to unmarshal, got error: %v", err)
 	}
-	if len(i18n) != 1 || i18n[0].Locale != "en-US" || !strings.Contains(i18n[0].Content, "plugin.plugin-dynamic-builder.name") {
+	if len(i18n) != 1 || i18n[0].Locale != "en-US" || !strings.Contains(i18n[0].Content, "plugin.plugin-dev-dynamic-builder.name") {
 		t.Fatalf("unexpected embedded i18n assets: %#v", i18n)
 	}
 
@@ -163,7 +163,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionAPIDocI18N], &apiDocI18N); err != nil {
 		t.Fatalf("expected apidoc i18n section json to unmarshal, got error: %v", err)
 	}
-	if len(apiDocI18N) != 1 || apiDocI18N[0].Locale != "zh-CN" || !strings.Contains(apiDocI18N[0].Content, "plugins.plugin_dynamic_builder") {
+	if len(apiDocI18N) != 1 || apiDocI18N[0].Locale != "zh-CN" || !strings.Contains(apiDocI18N[0].Content, "plugins.plugin_dev_dynamic_builder") {
 		t.Fatalf("unexpected embedded apidoc i18n assets: %#v", apiDocI18N)
 	}
 
@@ -208,7 +208,7 @@ func TestBuildRuntimeWasmArtifactFromSourceEmbedsDeclaredAssets(t *testing.T) {
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionBackendRoutes], &routes); err != nil {
 		t.Fatalf("expected route section json to unmarshal, got error: %v", err)
 	}
-	if len(routes) != 1 || routes[0].Permission != "plugin-dynamic-builder:review:view" {
+	if len(routes) != 1 || routes[0].Permission != "plugin-dev-dynamic-builder:review:view" {
 		t.Fatalf("unexpected embedded route specs: %#v", routes)
 	}
 	if routes[0].Meta["operLog"] != "other" {
@@ -258,7 +258,7 @@ func TestCollectLifecycleSpecsAutoDiscoversBackendHandlers(t *testing.T) {
 		"package backend\n\nimport \"lina-core/pkg/pluginbridge\"\n\ntype Controller struct{}\n\nfunc (c *Controller) BeforeInstall(_ *pluginbridge.BridgeRequestEnvelopeV1) (*pluginbridge.BridgeResponseEnvelopeV1, error) {\n\treturn pluginbridge.WriteJSON(200, &pluginbridge.LifecycleDecision{OK: true})\n}\n\nfunc (c *Controller) AfterInstall(_ *pluginbridge.BridgeRequestEnvelopeV1) (*pluginbridge.BridgeResponseEnvelopeV1, error) {\n\treturn pluginbridge.WriteJSON(200, &pluginbridge.LifecycleDecision{OK: true})\n}\n",
 	)
 
-	items, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	items, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err != nil {
 		t.Fatalf("expected lifecycle auto discovery to succeed, got error: %v", err)
 	}
@@ -290,7 +290,7 @@ func TestCollectLifecycleSpecsAppliesOverride(t *testing.T) {
 		"operation: BeforeInstall\nrequestType: CustomBeforeInstallReq\ninternalPath: /before-install\ntimeoutMs: 3000\n",
 	)
 
-	items, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	items, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err != nil {
 		t.Fatalf("expected lifecycle override merge to succeed, got error: %v", err)
 	}
@@ -310,7 +310,7 @@ func TestCollectLifecycleSpecsRejectsOverrideWithoutHandler(t *testing.T) {
 		"operation: BeforeInstall\nrequestType: BeforeInstallReq\ninternalPath: /__lifecycle/before-install\n",
 	)
 
-	_, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	_, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err == nil || !strings.Contains(err.Error(), "has no matching handler") {
 		t.Fatalf("expected missing handler override error, got %v", err)
 	}
@@ -334,7 +334,7 @@ func TestCollectLifecycleSpecsRejectsDuplicateOverride(t *testing.T) {
 		"operation: BeforeInstall\nrequestType: BeforeInstallReq\ninternalPath: /__lifecycle/before-install\n",
 	)
 
-	_, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	_, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err == nil || !strings.Contains(err.Error(), "operation is duplicated") {
 		t.Fatalf("expected duplicate override error, got %v", err)
 	}
@@ -348,7 +348,7 @@ func TestCollectLifecycleSpecsRejectsLegacyCanLifecycleName(t *testing.T) {
 		"package backend\n\nimport \"lina-core/pkg/pluginbridge\"\n\ntype Controller struct{}\n\nfunc (c *Controller) CanInstall(_ *pluginbridge.BridgeRequestEnvelopeV1) (*pluginbridge.BridgeResponseEnvelopeV1, error) {\n\treturn pluginbridge.WriteJSON(200, &pluginbridge.LifecycleDecision{OK: true})\n}\n",
 	)
 
-	_, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	_, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err == nil || !strings.Contains(err.Error(), "legacy lifecycle handler CanInstall is not supported") {
 		t.Fatalf("expected legacy lifecycle handler error, got %v", err)
 	}
@@ -367,7 +367,7 @@ func TestCollectLifecycleSpecsRejectsUnreachableOverride(t *testing.T) {
 		"operation: BeforeInstall\nrequestType: CustomBeforeInstallReq\ninternalPath: /custom/before-install\n",
 	)
 
-	_, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	_, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err == nil || !strings.Contains(err.Error(), "not reachable by guest dispatcher") {
 		t.Fatalf("expected unreachable override error, got %v", err)
 	}
@@ -381,7 +381,7 @@ func TestCollectLifecycleSpecsIgnoresServiceMethods(t *testing.T) {
 		"package dynamic\n\nimport \"lina-core/pkg/pluginbridge\"\n\ntype Service struct{}\n\nfunc (s *Service) BeforeInstall(_ *pluginbridge.BridgeRequestEnvelopeV1) (*pluginbridge.BridgeResponseEnvelopeV1, error) {\n\treturn pluginbridge.WriteJSON(200, &pluginbridge.LifecycleDecision{OK: true})\n}\n",
 	)
 
-	items, err := collectLifecycleSpecs(pluginDir, "plugin-dynamic-lifecycle")
+	items, err := collectLifecycleSpecs(pluginDir, "plugin-dev-dynamic-lifecycle")
 	if err != nil {
 		t.Fatalf("expected service method scan to be ignored without error, got %v", err)
 	}
@@ -396,7 +396,7 @@ func TestBuildRuntimeWasmArtifactFromSourceFailsWhenEmbeddedResourcesOmitManifes
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-missing-embed\nname: Dynamic Missing Embed\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-missing-embed\nname: Dynamic Missing Embed\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 	mustWriteFile(
 		t,
@@ -424,7 +424,7 @@ func TestBuildRuntimeWasmArtifactFromSourceRejectsDeprecatedCapabilitiesDeclarat
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-legacy-db\nname: Dynamic Legacy DB\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\ncapabilities:\n  - host:runtime\n  - host:db:query\nhostServices:\n  - service: runtime\n    methods:\n      - info.uuid\n",
+		"id: plugin-dev-dynamic-legacy-db\nname: Dynamic Legacy DB\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\ncapabilities:\n  - host:runtime\n  - host:db:query\nhostServices:\n  - service: runtime\n    methods:\n      - info.uuid\n",
 	)
 	mustWriteFile(
 		t,
@@ -457,7 +457,7 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-hidden\nname: Dynamic Hidden\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-hidden\nname: Dynamic Hidden\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 	mustWriteFile(
 		t,
@@ -481,7 +481,7 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	)
 	mustWriteFile(
 		t,
-		filepath.Join(pluginDir, "manifest", "sql", "001-plugin-dynamic-hidden.sql"),
+		filepath.Join(pluginDir, "manifest", "sql", "001-plugin-dev-dynamic-hidden.sql"),
 		"SELECT 1;",
 	)
 	mustWriteFile(
@@ -496,12 +496,12 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	)
 	mustWriteFile(
 		t,
-		filepath.Join(pluginDir, "manifest", "sql", "mock-data", "001-plugin-dynamic-hidden-mock-data.sql"),
+		filepath.Join(pluginDir, "manifest", "sql", "mock-data", "001-plugin-dev-dynamic-hidden-mock-data.sql"),
 		"SELECT 99;",
 	)
 	mustWriteFile(
 		t,
-		filepath.Join(pluginDir, "manifest", "sql", "uninstall", "001-plugin-dynamic-hidden.sql"),
+		filepath.Join(pluginDir, "manifest", "sql", "uninstall", "001-plugin-dev-dynamic-hidden.sql"),
 		"SELECT 2;",
 	)
 	mustWriteFile(
@@ -537,7 +537,7 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionInstallSQL], &installSQL); err != nil {
 		t.Fatalf("expected install sql section json to unmarshal, got error: %v", err)
 	}
-	if len(installSQL) != 1 || installSQL[0].Key != "001-plugin-dynamic-hidden.sql" {
+	if len(installSQL) != 1 || installSQL[0].Key != "001-plugin-dev-dynamic-hidden.sql" {
 		t.Fatalf("expected only visible install sql asset, got %#v", installSQL)
 	}
 
@@ -545,7 +545,7 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionUninstallSQL], &uninstallSQL); err != nil {
 		t.Fatalf("expected uninstall sql section json to unmarshal, got error: %v", err)
 	}
-	if len(uninstallSQL) != 1 || uninstallSQL[0].Key != "001-plugin-dynamic-hidden.sql" {
+	if len(uninstallSQL) != 1 || uninstallSQL[0].Key != "001-plugin-dev-dynamic-hidden.sql" {
 		t.Fatalf("expected only visible uninstall sql asset, got %#v", uninstallSQL)
 	}
 
@@ -556,7 +556,7 @@ func TestBuildRuntimeWasmArtifactFromSourceSkipsHiddenEmbeddedDirectoryEntries(t
 	if err = json.Unmarshal(sections[pluginDynamicWasmSectionMockSQL], &mockSQL); err != nil {
 		t.Fatalf("expected mock sql section json to unmarshal, got error: %v", err)
 	}
-	if len(mockSQL) != 1 || mockSQL[0].Key != "001-plugin-dynamic-hidden-mock-data.sql" {
+	if len(mockSQL) != 1 || mockSQL[0].Key != "001-plugin-dev-dynamic-hidden-mock-data.sql" {
 		t.Fatalf("expected mock-data sql asset to land in the mock section, got %#v", mockSQL)
 	}
 }
@@ -568,7 +568,7 @@ func TestBuildRuntimeWasmArtifactFromSourceCleansTemporaryGoMod(t *testing.T) {
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-temp-gomod\nname: Dynamic Temp GoMod\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-temp-gomod\nname: Dynamic Temp GoMod\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 	mustWriteFile(
 		t,
@@ -599,7 +599,7 @@ func TestWriteRuntimeWasmArtifactFromSourceWritesGeneratedFile(t *testing.T) {
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-write\nname: Dynamic Write\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-write\nname: Dynamic Write\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 
 	repoRoot, ok := findRuntimeBuildRepoRoot(".")
@@ -610,13 +610,13 @@ func TestWriteRuntimeWasmArtifactFromSourceWritesGeneratedFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected dynamic artifact write to succeed, got error: %v", err)
 	}
-	expectedPath := filepath.Join(repoRoot, defaultRuntimeOutputDir, "plugin-dynamic-write.wasm")
+	expectedPath := filepath.Join(repoRoot, defaultRuntimeOutputDir, "plugin-dev-dynamic-write.wasm")
 	if out.ArtifactPath != expectedPath {
 		t.Fatalf("expected generated dynamic artifact path %s, got %s", expectedPath, out.ArtifactPath)
 	}
 	t.Cleanup(func() {
 		_ = os.Remove(out.ArtifactPath)
-		_ = os.RemoveAll(filepath.Join(repoRoot, defaultRuntimeOutputDir, runtimeWorkspaceDirName, "plugin-dynamic-write"))
+		_ = os.RemoveAll(filepath.Join(repoRoot, defaultRuntimeOutputDir, runtimeWorkspaceDirName, "plugin-dev-dynamic-write"))
 	})
 
 	content, err := os.ReadFile(out.ArtifactPath)
@@ -626,7 +626,7 @@ func TestWriteRuntimeWasmArtifactFromSourceWritesGeneratedFile(t *testing.T) {
 	if len(content) == 0 {
 		t.Fatalf("expected generated dynamic artifact to contain bytes")
 	}
-	if _, err = os.Stat(filepath.Join(pluginDir, "temp", "plugin-dynamic-write.wasm")); !os.IsNotExist(err) {
+	if _, err = os.Stat(filepath.Join(pluginDir, "temp", "plugin-dev-dynamic-write.wasm")); !os.IsNotExist(err) {
 		t.Fatalf("expected generated dynamic artifact to stop being written into plugin temp/, got err=%v", err)
 	}
 }
@@ -637,14 +637,14 @@ func TestWriteRuntimeWasmArtifactFromSourceSupportsExternalOutputDir(t *testing.
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-output\nname: Dynamic Output\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-output\nname: Dynamic Output\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 
 	out, err := WriteRuntimeWasmArtifactFromSource(pluginDir, outputDir)
 	if err != nil {
 		t.Fatalf("expected dynamic artifact write to external dir to succeed, got error: %v", err)
 	}
-	if expected := filepath.Join(outputDir, "plugin-dynamic-output.wasm"); out.ArtifactPath != expected {
+	if expected := filepath.Join(outputDir, "plugin-dev-dynamic-output.wasm"); out.ArtifactPath != expected {
 		t.Fatalf("expected generated dynamic artifact path %s, got %s", expected, out.ArtifactPath)
 	}
 	if _, err = os.Stat(out.ArtifactPath); err != nil {
@@ -661,7 +661,7 @@ func TestWriteRuntimeWasmArtifactFromSourceSupportsRelativeOutputDir(t *testing.
 	mustWriteFile(
 		t,
 		filepath.Join(pluginDir, "plugin.yaml"),
-		"id: plugin-dynamic-relative-output\nname: Dynamic Relative Output\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
+		"id: plugin-dev-dynamic-relative-output\nname: Dynamic Relative Output\nversion: v0.1.0\ntype: dynamic\nscope_nature: tenant_aware\nsupports_multi_tenant: false\ndefault_install_mode: global\n",
 	)
 	mustWriteFile(
 		t,
@@ -682,10 +682,10 @@ func TestWriteRuntimeWasmArtifactFromSourceSupportsRelativeOutputDir(t *testing.
 	if err != nil {
 		t.Fatalf("expected dynamic artifact write to relative dir to succeed, got error: %v", err)
 	}
-	if expected := filepath.Join(outputDir, "plugin-dynamic-relative-output.wasm"); out.ArtifactPath != expected {
+	if expected := filepath.Join(outputDir, "plugin-dev-dynamic-relative-output.wasm"); out.ArtifactPath != expected {
 		t.Fatalf("expected generated dynamic artifact path %s, got %s", expected, out.ArtifactPath)
 	}
-	if expected := filepath.Join(outputDir, runtimeWorkspaceDirName, "plugin-dynamic-relative-output", "runtime-plugin.wasm"); out.RuntimePath != expected {
+	if expected := filepath.Join(outputDir, runtimeWorkspaceDirName, "plugin-dev-dynamic-relative-output", "runtime-plugin.wasm"); out.RuntimePath != expected {
 		t.Fatalf("expected generated guest runtime path %s, got %s", expected, out.RuntimePath)
 	}
 	if _, err = os.Stat(out.ArtifactPath); err != nil {
@@ -702,7 +702,7 @@ func TestSelectGuestRuntimeGoWorkUsesPluginWorkspaceOnlyForOfficialPlugins(t *te
 		t.Fatal("expected builder test to resolve repo root")
 	}
 
-	officialPluginDir := filepath.Join(repoRoot, "apps", "lina-plugins", "plugin-demo-dynamic")
+	officialPluginDir := filepath.Join(repoRoot, "apps", "lina-plugins", "linapro-demo-dynamic")
 	if got := selectGuestRuntimeGoWork(officialPluginDir); got != filepath.Join(repoRoot, "temp", "go.work.plugins") {
 		t.Fatalf("expected official plugin dir to use temporary plugin workspace, got %q", got)
 	}

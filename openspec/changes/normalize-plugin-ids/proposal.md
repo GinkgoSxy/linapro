@@ -1,11 +1,11 @@
 ## Why
 
-当前插件 ID 只要求唯一和 `kebab-case`，缺少稳定的作者、领域和能力分层，导致官方插件和未来第三方插件容易出现领域名随意、能力名含混、生态分类困难的问题。随着源码插件、动态插件、插件治理、运行时 i18n、菜单权限、cron 和宿主能力 provider 逐步稳定，插件 ID 已经成为跨运行时边界的关键身份，需要在生态扩展前完成规范化。
+当前官方插件 ID 缺少统一前缀和能力分层，导致官方插件与未来第三方插件容易出现命名边界不清、生态分类困难的问题。随着源码插件、动态插件、插件治理、运行时 i18n、菜单权限、cron 和宿主能力 provider 逐步稳定，插件 ID 已经成为跨运行时边界的关键身份，需要在官方插件生态扩展前完成规范化。
 
 ## What Changes
 
-- **BREAKING**：插件 ID 命名统一为 `<author>-<domain>-<capability>`，其中 `domain` 必须来自宿主维护的白名单，`capability` 可由一个或多个 kebab-case 单词组成。
-- 新增官方 domain 范围治理，避免插件作者随意创造领域名；`core` 作为官方保留 capability，仅允许 LinaPro 官方基础能力插件使用。
+- 插件 ID 推荐使用 `<author>-<domain>-<capability>`，其中 `capability` 可由一个或多个 kebab-case 单词组成；该规则作为命名建议和官方插件治理约定，不作为宿主运行时强制校验。
+- 宿主运行时仅强制插件 ID 的基础安全边界：非空、64 字符长度上限和 lowercase kebab-case，避免插件 ID 破坏 URL、文件名、数据库键、菜单、权限、i18n 或 apidoc 命名空间。
 - **BREAKING**：现有官方插件 ID 统一重命名，不保留旧 ID 兼容或别名：
   - `content-notice` -> `linapro-content-notice`
   - `monitor-loginlog` -> `linapro-monitor-loginlog`
@@ -18,17 +18,17 @@
   - `plugin-demo-source` -> `linapro-demo-source`
   - `demo-control` -> `linapro-ops-demo-guard`
 - 插件 manifest、源码插件注册、动态插件 artifact、依赖声明、菜单 key、i18n namespace、apidoc namespace、cron handlerRef、动态资源路径、扩展 API 路径、配置、测试和文档中的官方插件 ID 同步改名。
-- 新增或扩展治理扫描/测试，确保新增插件 ID、官方 domain、官方插件目录名、manifest ID、源码注册 ID、菜单 key 与 i18n namespace 一致。
+- 新增或扩展治理扫描/测试，确保官方插件目录名、manifest ID、源码注册 ID、菜单 key 与 i18n namespace 一致。
 
 ## Capabilities
 
 ### New Capabilities
 
-- `plugin-id-governance`: 定义插件 ID 的结构化命名规则、domain 白名单、官方保留 capability、官方插件 ID 映射、运行时身份一致性和治理验证要求。
+- `plugin-id-governance`: 定义插件 ID 的基础安全边界、官方插件 ID 建议结构、官方插件 ID 映射、运行时身份一致性和治理验证要求。
 
 ### Modified Capabilities
 
-- `plugin-manifest-lifecycle`: 将插件 manifest ID 校验从纯 `kebab-case` 扩展为结构化插件 ID 校验，并要求依赖声明、源码注册 ID 与动态 artifact manifest 复用同一规则。
+- `plugin-manifest-lifecycle`: 将插件 manifest ID、依赖声明、源码注册 ID 与动态 artifact manifest 统一接入基础安全校验，并保留注册 ID 与 manifest ID 一致性校验。
 - `demo-control-guard`: 将官方演示只读保护插件的规范标识从 `demo-control` 更新为 `linapro-ops-demo-guard`，保持启用态守卫语义不变。
 
 ## Impact

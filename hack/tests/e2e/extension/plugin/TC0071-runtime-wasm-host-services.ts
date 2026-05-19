@@ -17,9 +17,9 @@ import {
 const apiBaseURL =
   process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:8080/api/v1/";
 
-const successPluginID = "plugin-host-services-e2e";
-const deniedPluginID = "plugin-host-services-denied-e2e";
-const rawSQLPluginID = "plugin-host-services-raw-sql-e2e";
+const successPluginID = "plugin-dev-host-services-e2e";
+const deniedPluginID = "plugin-dev-host-services-denied-e2e";
+const rawSQLPluginID = "plugin-dev-host-services-raw-sql-e2e";
 
 type PluginListItem = {
   id: string;
@@ -333,7 +333,7 @@ func HandleRequest(
 
 function buildSuccessPluginSource(upstreamBaseURL: string) {
   const pluginDir = sourcePluginDir(successPluginID);
-  const moduleName = "lina-plugin-host-services-e2e";
+  const moduleName = "lina-plugin-dev-host-services-e2e";
   rmSync(pluginDir, { force: true, recursive: true });
 
   writeTestFile(
@@ -632,7 +632,7 @@ func (c *Controller) HostServices(request *pluginbridge.BridgeRequestEnvelopeV1)
 
 function buildDeniedPluginSource() {
   const pluginDir = sourcePluginDir(deniedPluginID);
-  const moduleName = "lina-plugin-host-services-denied-e2e";
+  const moduleName = "lina-plugin-dev-host-services-denied-e2e";
   rmSync(pluginDir, { force: true, recursive: true });
 
   writeTestFile(

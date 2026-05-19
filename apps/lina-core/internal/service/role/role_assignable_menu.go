@@ -336,7 +336,7 @@ func roleMenuPermissionPlatformOnly(permission string) bool {
 }
 
 // roleMenuIsTenantAllowedSelfService preserves tenant plugin self-service
-// permissions even though the owning multi-tenant plugin also exposes platform
+// permissions even though the owning linapro-tenant-core plugin also exposes platform
 // tenant-management permissions.
 func roleMenuIsTenantAllowedSelfService(menu *entity.SysMenu) bool {
 	if menu == nil {

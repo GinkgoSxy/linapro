@@ -100,17 +100,17 @@ func TestTenantSnapshotDoesNotOverwritePlatformSnapshot(t *testing.T) {
 	svc := &serviceImpl{sharedState: shared}
 
 	svc.storeLoadedEnabledSnapshot(context.Background(), map[string]bool{
-		"monitor-loginlog": true,
+		"linapro-monitor-loginlog": true,
 	})
 	svc.storeLoadedEnabledSnapshot(datascope.WithTenantForTest(context.Background(), 42), map[string]bool{
-		"monitor-loginlog": false,
+		"linapro-monitor-loginlog": false,
 	})
 
-	enabledByID := map[string]bool{"monitor-loginlog": false}
+	enabledByID := map[string]bool{"linapro-monitor-loginlog": false}
 	if !svc.applyLoadedEnabledSnapshot(enabledByID) {
 		t.Fatal("expected platform snapshot to remain available")
 	}
-	if !enabledByID["monitor-loginlog"] {
+	if !enabledByID["linapro-monitor-loginlog"] {
 		t.Fatal("expected tenant snapshot not to hide platform admin monitor menu")
 	}
 }
@@ -123,7 +123,7 @@ func TestPlatformOnlyGlobalPluginRemainsEnabledInTenantContext(t *testing.T) {
 	ctx := datascope.WithTenantForTest(context.Background(), 42)
 
 	enabled, err := svc.registryEnabledForTenant(ctx, &entity.SysPlugin{
-		PluginId:    "multi-tenant",
+		PluginId:    "linapro-tenant-core",
 		Installed:   catalog.InstalledYes,
 		Status:      catalog.StatusEnabled,
 		ScopeNature: catalog.ScopeNaturePlatformOnly.String(),

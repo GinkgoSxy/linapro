@@ -9,7 +9,7 @@ cd hack/tools/linactl
 go run . help
 go run . status
 go run . pack.assets
-go run . wasm p=plugin-demo-dynamic
+go run . wasm p=linapro-demo-dynamic
 go run . wasm plugin_dir=/path/to/plugin out=temp/output
 go run . plugins.status
 go run . i18n.check
@@ -58,7 +58,7 @@ make.cmd release.tag.check tag=v0.2.0
 | `plugins` | `plugins=0` | 覆盖构建、开发、镜像和 Go 测试命令的自动插件完整模式探测。 |
 | `tag` | `tag=v0.2.0` | 指定 `release.tag.check` 校验的 release tag。 |
 | `print-version` | `print-version=1` | 输出已校验的 `framework.version`，供发布自动化使用。 |
-| `p` | `p=multi-tenant` | 为 Wasm 构建或插件工作区管理命令选择单个插件。 |
+| `p` | `p=linapro-tenant-core` | 为 Wasm 构建或插件工作区管理命令选择单个插件。 |
 | `plugin-dir` | `plugin_dir=/path/to/plugin` | 从显式源码目录构建单个动态插件产物。 |
 | `out` | `out=temp/output` | 指定动态插件产物输出目录。 |
 | `source` | `source=official` | 为插件工作区管理命令选择单个已配置来源。 |
@@ -74,7 +74,7 @@ make.cmd release.tag.check tag=v0.2.0
 ```bash
 make image tag=v0.2.0 push=0
 make image.build tag=v0.2.0
-make wasm p=plugin-demo-dynamic
+make wasm p=linapro-demo-dynamic
 ```
 
 当测试或本地夹具需要打包`apps/lina-plugins`之外的动态插件目录时，可以使用`plugin_dir=<path>`。
@@ -114,8 +114,8 @@ plugins:
       root: "."
       ref: "main"
       items:
-        - "multi-tenant"
-        - "org-center"
+        - "linapro-tenant-core"
+        - "linapro-org-core"
 ```
 
 `items` 只接受插件 ID 字符串。使用带引号的 `"*"` 可安装 source `root` 下一层的全部插件目录；不要写裸的 `- *`，因为 YAML 会把它当作 alias 语法。如果同一仓库中的插件需要不同 `ref`，应拆成多个 source。
@@ -125,7 +125,7 @@ plugins:
 ```bash
 make plugins.init
 make plugins.install
-make plugins.install p=multi-tenant
+make plugins.install p=linapro-tenant-core
 make plugins.update source=official
 make plugins.update force=1
 make plugins.status

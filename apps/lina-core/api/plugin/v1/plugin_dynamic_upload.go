@@ -16,7 +16,7 @@ type UploadDynamicPackageReq struct {
 
 // UploadDynamicPackageRes is the response for uploading a dynamic wasm package.
 type UploadDynamicPackageRes struct {
-	Id          string                  `json:"id" dc:"Plugin unique identifier, from wasm embed manifest" eg:"plugin-dynamic-demo"`
+	Id          string                  `json:"id" dc:"Plugin unique identifier, from wasm embed manifest" eg:"plugin-dev-dynamic-demo"`
 	Name        string                  `json:"name" dc:"Plugin name, from wasm embedding manifest" eg:"Dynamic Demo Plugin"`
 	Version     string                  `json:"version" dc:"Plugin version number, from wasm embed manifest" eg:"v0.1.0"`
 	Type        PluginType              `json:"type" dc:"Plugin first-level type, fixed to dynamic" eg:"dynamic"`

@@ -64,6 +64,7 @@
 - [x] **FB-11**: `hack/scripts` 仍保留已可由 `linactl` 覆盖的 Bash 脚本，项目规范和 `lina-review` 也缺少开发工具脚本必须跨平台、优先使用 Go 工具链实现的治理要求；已删除 `prepare-packed-assets.sh` 与 `stop-dev-services.sh`，对应能力由 `linactl prepare-packed-assets` 和 `linactl stop` 承载，`linactl test.scripts` 改为 Go 测试与 Go 静态治理检查，并删除已失效的 Bash smoke 脚本
 - [x] **FB-12**: nightly 每日测试与构建未将 host-only 和 plugin-full 测试矩阵单独运行，无法同时证明未初始化 submodule 与完整官方插件工作区两种质量边界；已新增 nightly host-only E2E、plugin-full Windows command smoke、plugin-full Go unit tests、plugin-full frontend unit tests，并将 plugin-full E2E 与 host-only E2E 使用独立 job 和独立报告产物，nightly image 发布依赖完整矩阵通过
 - [x] **FB-13**: 宿主嵌入资源打包的 Make 入口 `prepare-packed-assets` 命名过长且日常命令语义不够清晰；已改为 `make pack.assets`，底层 `linactl prepare-packed-assets` 保持描述性工具命令不变
+- [x] **FB-14**: 宿主 `menu` 服务仍硬编码官方源码插件 ID 与固定父级目录绑定，导致插件 manifest 不能自主选择稳定宿主挂载点；已移除官方插件 ID 到固定父级目录的宿主映射，manifest 校验不再限制外部 `parent_key` 必须是宿主稳定目录或本插件菜单，菜单同步只要求外部父级菜单记录真实存在，避免产生孤儿菜单树
 
 ## Verification Notes
 
@@ -80,6 +81,7 @@
 - i18n(FB-11): 仅调整开发工具入口、项目规范和审查标准，不新增或修改前端运行时页面文案、接口文档、manifest i18n 或插件清单文案。
 - i18n(FB-12): 仅调整 GitHub Actions nightly job 编排、job 名称和 artifact 名称，不新增或修改前端运行时页面文案、接口文档、manifest i18n 或插件清单文案。
 - i18n(FB-13): 仅调整开发命令名称和测试脚本中的 Make 入口，不新增或修改前端运行时页面文案、接口文档、manifest i18n 或插件清单文案。
+- i18n(FB-14): 仅调整插件菜单父级挂载策略和中英文 README 说明，不新增或修改前端运行时页面文案、接口文档、manifest i18n 或插件清单翻译资源。
 - Cache: 未新增缓存策略或缓存扇区，沿用现有插件发现与运行时缓存机制，未引入新的跨实例失效要求。
 - Cache(FB-2): 运行时源码插件发现改为读取进程内已注册插件定义，没有新增缓存、订阅或跨实例失效面。
 - Cache(FB-3): 测试支持组件迁移不涉及运行时缓存、订阅、失效或跨实例一致性策略。
@@ -93,6 +95,7 @@
 - Cache(FB-11): 不新增或修改业务运行时缓存、缓存键、缓存失效路径、跨实例同步机制或故障降级策略。
 - Cache(FB-12): 仅调整 CI 测试矩阵和发布门禁，不修改运行时缓存、缓存失效或跨实例一致性策略。
 - Cache(FB-13): 仅调整开发命令名称，不修改运行时缓存、缓存键、缓存失效路径、跨实例同步机制或故障降级策略。
+- Cache(FB-14): 仅移除菜单挂载策略限制，未新增或修改运行时缓存、缓存键、缓存失效路径、跨实例同步机制或故障降级策略；菜单同步仍依赖既有数据库权威数据源。
 - Data permission: 未新增或扩大数据操作接口，沿用现有数据权限接入方式。
 - Data permission(FB-2): 未新增数据查询/写入接口，插件同步仍沿用既有权限 `plugin:install` 和现有 registry 同步路径。
 - Data permission(FB-3): 未新增或扩大数据操作接口，不涉及角色数据权限边界。
@@ -106,6 +109,7 @@
 - Data permission(FB-11): 未新增或修改 HTTP/API 数据操作接口、服务数据访问路径或插件宿主数据访问路径，不涉及角色数据权限边界。
 - Data permission(FB-12): 未新增或修改 HTTP/API 数据操作接口、服务数据访问路径或插件宿主数据访问路径，不涉及角色数据权限边界。
 - Data permission(FB-13): 未新增或修改 HTTP/API 数据操作接口、服务数据访问路径或插件宿主数据访问路径，不涉及角色数据权限边界。
+- Data permission(FB-14): 未新增或修改 HTTP/API 数据操作接口、服务数据访问路径或插件宿主数据访问路径；菜单同步仍使用既有插件生命周期权限边界，不涉及角色数据权限过滤变化。
 - Review: 已完成 `lina-review` 审查；修复了 `AGENTS.md` 目录树缩进与 submodule 语义说明、host-only 构建继承 `GOFLAGS=-tags=official_plugins` 时可能错误启用官方插件注册的问题，并补充 `linactl` 环境组装测试；同时显式处理 `build-wasm` 临时 `go.mod`/`go.sum` 清理错误。
 - Review(FB-5): 已完成最新 `lina-review` 审查；确认根目录 `go.work` 保持 host-only，插件模式只生成已忽略的 `temp/go.work.plugins` 并通过 `GOWORK` 使用，未发现新的 i18n、缓存一致性或数据权限影响。
 - Review(FB-6): 已完成最新 `lina-review` 审查；确认 `linactl` 直接运行示例、`Makefile` 和 `make.cmd` 不再强制 `GOWORK=off`，并将 `make.cmd` 调整为 `pushd/popd` 保留调用方工作目录；本次反馈不涉及后端运行时代码、API、缓存、i18n 资源或数据权限边界。
@@ -116,6 +120,7 @@
 - Review(FB-11): 已完成最新 `lina-review` 审查；确认 `hack/scripts` 下两个 Bash 脚本均为已由 `linactl` Go 命令覆盖的遗留入口，删除后 `go run ./hack/tools/linactl prepare-packed-assets`、`make stop`、`make status` 和 `make test.scripts` 仍委托 `linactl`；宿主 Make 资源打包入口后续由 FB-13 统一为 `make pack.assets`。项目规范和审查技能已新增跨平台开发工具脚本要求。现存 `hack/tests/scripts/run-sqlite-smoke.sh`、`hack/tests/scripts/run-redis-cluster-smoke.sh` 与前端 Docker 构建脚本属于本轮未改动的既有平台脚本，后续新增或修改时必须按新规范迁移到 Go/Node 或记录平台边界。
 - Review(FB-12): 已完成最新 `lina-review` 审查；确认 nightly 已拆分 host-only 与 plugin-full 测试矩阵，host-only 路径不初始化 submodule 并运行 host-only Windows 命令 smoke、Go 单测、前端单测和 `pnpm test:host`，plugin-full 路径初始化 submodule 并运行 Windows 插件命令 smoke、Go 插件模式单测、前端单测和 full E2E，nightly image 发布前依赖两套测试矩阵全部通过。
 - Review(FB-13): 已完成 `lina-review` 审查；确认本次仅重命名宿主 Make 包装入口为 `pack.assets` 并同步 smoke 脚本引用，底层跨平台 Go 工具命令 `linactl prepare-packed-assets` 保持不变，未修改后端运行时代码、API、缓存、i18n 资源或数据权限边界。
+- Review(FB-14): 已完成 `lina-review` 审查；确认宿主 `menu` 服务不再硬编码官方源码插件 ID 或固定父级目录映射，插件 manifest 可自主声明外部 `parent_key`，同步阶段保留父级记录存在性校验以避免孤儿菜单树；未新增运行时 API、缓存、i18n 资源或数据权限影响。
 - Tests: 已完成宿主后端构建、插件相关单测、前端 typecheck/build、前端 build、E2E 治理校验、宿主 E2E 校验与 plugin-full 构建验证。
 - Tests(FB-2): 已通过 `go test ./apps/lina-core/internal/service/plugin/internal/catalog -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/testutil -count=1`、`go test ./apps/lina-core/pkg/pluginhost -count=1`、`go test ./apps/lina-core/internal/service/plugin -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/integration -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/runtime -count=1`、`go test ./apps/lina-core/internal/controller/plugin -count=1`、`go test ./hack/tools/build-wasm/... -count=1`、`go test ./apps/lina-core/internal/service/apidoc ./apps/lina-core/internal/service/i18n -count=1`、`go build ./apps/lina-core`、`openspec validate official-plugins-submodule-decoupling --strict`。
 - Tests(FB-3): 已通过 `go test ./apps/lina-core/pkg/testsupport -count=1`、`go test ./apps/lina-core/pkg/dialect -count=1`、`go test ./apps/lina-core/internal/cmd -count=1`、`go test ./apps/lina-core/internal/service/i18n ./apps/lina-core/internal/service/apidoc -count=1`、`openspec validate official-plugins-submodule-decoupling --strict`、`git diff --check -- apps/lina-core openspec/changes/official-plugins-submodule-decoupling/tasks.md`；静态扫描确认无 `internal/testsupport` 残留，`pkg/testsupport` 仅被 `_test.go` 文件导入。
@@ -129,3 +134,4 @@
 - Tests(FB-11): 已通过 `cd hack/tools/linactl && go test ./... -count=1`、`go run ./hack/tools/linactl test.scripts`、`find hack/scripts -maxdepth 1 -type f -print | wc -l` 输出 `0`、旧入口残留静态扫描无输出（`hack/scripts/(prepare-packed-assets|stop-dev-services).sh`、`test.scripts requires POSIX`、`filepath.Glob(...*.sh)`、`"bash", script`）、`rg --files -g '*.sh' -g '*.ps1' -g '*.cmd'` 确认默认仓库工具入口仅剩 `make.cmd`，其余 `.sh` 为既有 CI/前端专用脚本。
 - Tests(FB-12): 已通过 `go run github.com/rhysd/actionlint/cmd/actionlint@latest -no-color .github/workflows/nightly-test-and-build.yml`、Ruby YAML 解析 `.github/workflows/nightly-test-and-build.yml`、抽取 `.github/workflows/nightly-test-and-build.yml` 所有 Bash `run` block 执行 `bash -n`、`openspec validate official-plugins-submodule-decoupling --strict`、`git diff --check -- .github/workflows/nightly-test-and-build.yml openspec/changes/official-plugins-submodule-decoupling/tasks.md`。
 - Tests(FB-13): 已通过 `cd apps/lina-core && make -n pack.assets`、`cd apps/lina-core && make -n build`、`rg -n 'make (-C [^ ]+ )?prepare-packed-assets|build: prepare-packed-assets|\\.PHONY: prepare-packed-assets' apps hack Makefile make.cmd README.md README.zh-CN.md --glob '!apps/lina-vben/**/node_modules/**'` 无输出、`openspec validate official-plugins-submodule-decoupling --strict`、`git diff --check -- apps/lina-core/Makefile hack/tests/scripts/run-sqlite-smoke.sh hack/tests/scripts/run-redis-cluster-smoke.sh openspec/changes/official-plugins-submodule-decoupling/tasks.md`。
+- Tests(FB-14): 已通过 `go test ./apps/lina-core/internal/service/menu -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/catalog -run 'TestValidateManifestMenus|TestParsePluginID|TestValidatePluginID|TestValidatePluginManifestRejectsInvalidDependencies' -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/integration -run 'TestSyncPluginMenusResolves(StableHostParent|ChosenExternalParent)' -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/catalog -count=1`、`go test ./apps/lina-core/internal/service/plugin/internal/integration -count=1`、`openspec validate official-plugins-submodule-decoupling --strict`、`git diff --check -- apps/lina-core/internal/service/menu/menu_metadata.go apps/lina-core/internal/service/plugin/internal/catalog/manifest_validate.go apps/lina-core/internal/service/plugin/internal/integration/menu.go apps/lina-core/internal/service/plugin/internal/catalog/catalog_test.go apps/lina-core/internal/service/plugin/internal/integration/menu_test.go apps/lina-plugins/README.md apps/lina-plugins/README.zh-CN.md openspec/changes/official-plugins-submodule-decoupling/specs/menu-management/spec.md openspec/changes/official-plugins-submodule-decoupling/tasks.md`；静态扫描确认 `ExpectedStableParent*`、固定官方插件父级映射和“只能挂载到稳定宿主目录”的旧规则无残留。

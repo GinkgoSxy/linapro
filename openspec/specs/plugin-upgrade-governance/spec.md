@@ -77,14 +77,14 @@
 系统 SHALL 保持动态插件升级在运行时模型上。动态插件新 artifact 被上传或文件覆盖后，若发现版本高于数据库有效版本，系统必须将插件标记为待升级，并通过同一插件管理页升级流程完成有效 release 切换和治理资源同步。
 
 #### Scenario: 动态插件发现更高版本
-- **WHEN** 动态插件 `plugin-demo-dynamic` 有效运行 `v0.1.0`
+- **WHEN** 动态插件 `linapro-demo-dynamic` 有效运行 `v0.1.0`
 - **AND** 本地发现或上传的动态插件 artifact 版本为 `v0.2.0`
 - **THEN** 系统将插件标记为待升级
 - **AND** 有效 release 仍保持 `v0.1.0`
 - **AND** 管理员必须通过插件管理页显式确认升级
 
 #### Scenario: 动态插件文件版本低于有效版本
-- **WHEN** 动态插件 `plugin-demo-dynamic` 有效运行 `v0.2.0`
+- **WHEN** 动态插件 `linapro-demo-dynamic` 有效运行 `v0.2.0`
 - **AND** 本地发现或上传的 artifact 版本为 `v0.1.0`
 - **THEN** 系统将插件标记为异常
 - **AND** 系统不得自动降级有效 release

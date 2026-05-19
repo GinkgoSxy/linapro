@@ -7,12 +7,12 @@ import "github.com/gogf/gf/v2/frame/g"
 // UpgradePreviewReq is the request for previewing one plugin runtime upgrade.
 type UpgradePreviewReq struct {
 	g.Meta `path:"/plugins/{id}/upgrade/preview" method:"get" tags:"Plugin Management" summary:"Preview plugin runtime upgrade" permission:"plugin:query" dc:"Return a side-effect-free runtime upgrade preview for a pending-upgrade or failed-upgrade plugin, including effective and target manifest snapshots, dependency checks, SQL summary, hostServices changes, and risk hints. This endpoint does not execute SQL, switch releases, update state, or invoke plugin callbacks."`
-	Id     string `json:"id" v:"required|length:1,64" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	Id     string `json:"id" v:"required|length:1,64" dc:"Plugin unique identifier" eg:"linapro-demo-source"`
 }
 
 // UpgradePreviewRes is the response for previewing one plugin runtime upgrade.
 type UpgradePreviewRes struct {
-	PluginId          string                        `json:"pluginId" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	PluginId          string                        `json:"pluginId" dc:"Plugin unique identifier" eg:"linapro-demo-source"`
 	RuntimeState      RuntimeState                  `json:"runtimeState" dc:"Current plugin runtime upgrade state, expected to be pending_upgrade or upgrade_failed for preview" eg:"pending_upgrade"`
 	EffectiveVersion  string                        `json:"effectiveVersion" dc:"Database-effective plugin version before upgrade" eg:"v0.1.0"`
 	DiscoveredVersion string                        `json:"discoveredVersion" dc:"Target plugin version discovered from source plugin.yaml or dynamic artifact metadata" eg:"v0.2.0"`
@@ -26,7 +26,7 @@ type UpgradePreviewRes struct {
 
 // PluginManifestSnapshotItem stores review-friendly manifest metadata for upgrade preview.
 type PluginManifestSnapshotItem struct {
-	Id                        string                       `json:"id" dc:"Plugin unique identifier" eg:"plugin-demo-source"`
+	Id                        string                       `json:"id" dc:"Plugin unique identifier" eg:"linapro-demo-source"`
 	Name                      string                       `json:"name" dc:"Plugin display name" eg:"Source Plugin Demo"`
 	Version                   string                       `json:"version" dc:"Manifest version" eg:"v0.2.0"`
 	Type                      PluginType                   `json:"type" dc:"Plugin type: source or dynamic" eg:"source"`

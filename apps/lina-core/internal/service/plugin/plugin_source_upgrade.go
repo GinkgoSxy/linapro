@@ -8,6 +8,7 @@ import (
 
 	"lina-core/internal/service/plugin/internal/catalog"
 	sourceupgradeinternal "lina-core/internal/service/plugin/internal/sourceupgrade"
+	"lina-core/pkg/logger"
 	sourceupgradecontract "lina-core/pkg/sourceupgrade/contract"
 )
 
@@ -33,6 +34,15 @@ func (s *serviceImpl) UpgradeSourcePlugin(ctx context.Context, pluginID string) 
 	}
 	result, err := s.sourceUpgradeSvc.UpgradeSourcePlugin(ctx, pluginID)
 	if err != nil {
+		s.invalidateRuntimeUpgradeCaches(ctx, pluginID, catalog.TypeSource.String(), "source_plugin_upgrade_failed")
+		if markErr := s.markRuntimeCacheChanged(ctx, "source_plugin_upgrade_failed"); markErr != nil {
+			logger.Warningf(
+				ctx,
+				"mark runtime cache changed after source upgrade failure failed plugin=%s err=%v",
+				pluginID,
+				markErr,
+			)
+		}
 		return nil, err
 	}
 	if result != nil && result.Executed {

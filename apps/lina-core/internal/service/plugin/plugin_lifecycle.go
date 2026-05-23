@@ -107,6 +107,9 @@ func (s *serviceImpl) install(
 	if err = s.syncEnabledSnapshotFromRegistry(ctx, pluginID); err != nil {
 		return result, err
 	}
+	if err = s.markRuntimeCacheChanged(ctx, "dynamic_plugin_installed"); err != nil {
+		return result, err
+	}
 	if err = notifyPluginInstalled(ctx, pluginID); err != nil {
 		return result, err
 	}
@@ -272,6 +275,9 @@ func (s *serviceImpl) Uninstall(
 	if err = s.syncEnabledSnapshotFromRegistry(ctx, pluginID); err != nil {
 		return err
 	}
+	if err = s.markRuntimeCacheChanged(ctx, "dynamic_plugin_uninstalled"); err != nil {
+		return err
+	}
 	if err = notifyPluginUninstalled(ctx, pluginID); err != nil {
 		return err
 	}
@@ -315,6 +321,9 @@ func (s *serviceImpl) uninstallWithoutDesiredManifest(
 		return wrapUninstallExecutionError(err, pluginID)
 	}
 	if err = s.syncEnabledSnapshotFromRegistry(ctx, pluginID); err != nil {
+		return err
+	}
+	if err = s.markRuntimeCacheChanged(ctx, "dynamic_plugin_uninstalled"); err != nil {
 		return err
 	}
 	if err = notifyPluginUninstalled(ctx, pluginID); err != nil {
@@ -492,6 +501,9 @@ func (s *serviceImpl) updateStatus(
 			return err
 		}
 		if err = s.syncEnabledSnapshotFromRegistry(ctx, pluginID); err != nil {
+			return err
+		}
+		if err = s.markRuntimeCacheChanged(ctx, "dynamic_plugin_status_changed"); err != nil {
 			return err
 		}
 		if status == catalog.StatusEnabled {

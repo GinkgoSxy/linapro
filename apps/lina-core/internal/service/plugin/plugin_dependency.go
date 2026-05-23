@@ -275,7 +275,11 @@ func (s *serviceImpl) validateUpgradeCandidateDependencies(ctx context.Context, 
 
 // resolveInstallDependencies evaluates dependency status for one discovered target.
 func (s *serviceImpl) resolveInstallDependencies(ctx context.Context, pluginID string) (*plugindep.InstallCheckResult, error) {
-	manifest, err := s.catalogSvc.GetDesiredManifest(pluginID)
+	normalizedPluginID := strings.TrimSpace(pluginID)
+	if manifest := manifestByIDFromContext(ctx, normalizedPluginID); manifest != nil {
+		return s.resolveInstallDependenciesForManifest(ctx, manifest)
+	}
+	manifest, err := s.catalogSvc.GetDesiredManifest(normalizedPluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -327,9 +331,13 @@ func (s *serviceImpl) buildDependencySnapshots(
 			return cloneDependencySnapshots(cache.snapshots), nil
 		}
 	}
-	manifests, err := s.catalogSvc.ScanManifests()
-	if err != nil {
-		return nil, err
+	manifests := manifestSnapshotFromContext(ctx)
+	if manifests == nil {
+		var err error
+		manifests, err = s.catalogSvc.ScanManifests()
+		if err != nil {
+			return nil, err
+		}
 	}
 	snapshotByID := make(map[string]*plugindep.PluginSnapshot, len(manifests)+1)
 	for _, manifest := range manifests {
@@ -399,6 +407,21 @@ func (s *serviceImpl) buildDependencySnapshots(
 		}
 	}
 	return out, nil
+}
+
+// manifestByIDFromContext returns a manifest from the request-local discovery
+// snapshot without triggering another scan.
+func manifestByIDFromContext(ctx context.Context, pluginID string) *catalog.Manifest {
+	normalizedPluginID := strings.TrimSpace(pluginID)
+	if normalizedPluginID == "" {
+		return nil
+	}
+	for _, manifest := range manifestSnapshotFromContext(ctx) {
+		if manifest != nil && strings.TrimSpace(manifest.ID) == normalizedPluginID {
+			return manifest
+		}
+	}
+	return nil
 }
 
 // applyRegistryDependencySnapshot prefers installed release snapshots for effective dependency metadata.

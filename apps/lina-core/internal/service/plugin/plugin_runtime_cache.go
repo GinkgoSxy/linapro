@@ -20,6 +20,10 @@ var pluginRuntimeCacheObservedRevision = pluginruntimecache.NewObservedRevision(
 // pluginI18nService defines the i18n methods needed by plugin lifecycle,
 // runtime cache refresh, and source-plugin reason rendering paths.
 type pluginI18nService interface {
+	// GetLocale returns the effective request locale stored in business context.
+	GetLocale(ctx context.Context) string
+	// BundleVersion returns the per-locale runtime translation bundle version.
+	BundleVersion(locale string) uint64
 	// InvalidateRuntimeBundleCache clears cached runtime bundles for one explicit scope.
 	InvalidateRuntimeBundleCache(scope i18nsvc.InvalidateScope)
 	// Translate renders one runtime i18n key in the current request locale.
@@ -34,6 +38,7 @@ func newRuntimeCacheRevisionController(
 	integrationSvc pluginRuntimeIntegrationRefresher,
 	frontendSvc pluginRuntimeFrontendInvalidator,
 	i18nSvc pluginI18nService,
+	managementListInvalidator pluginManagementListInvalidator,
 ) *pluginruntimecache.Controller {
 	clusterEnabled := false
 	if topology != nil {
@@ -51,6 +56,9 @@ func newRuntimeCacheRevisionController(
 			}
 			if frontendSvc != nil {
 				frontendSvc.InvalidateAllBundles(ctx, "cluster_runtime_revision_changed")
+			}
+			if managementListInvalidator != nil {
+				managementListInvalidator.InvalidateManagementListCache(ctx, "cluster_runtime_revision_changed")
 			}
 			wasm.InvalidateAllCache(ctx)
 			if i18nSvc != nil {
@@ -76,6 +84,12 @@ type pluginRuntimeIntegrationRefresher interface {
 type pluginRuntimeFrontendInvalidator interface {
 	// InvalidateAllBundles removes every cached runtime frontend bundle.
 	InvalidateAllBundles(ctx context.Context, reason string)
+}
+
+// pluginManagementListInvalidator narrows the root read-model invalidation callback.
+type pluginManagementListInvalidator interface {
+	// InvalidateManagementListCache clears the plugin management read model.
+	InvalidateManagementListCache(ctx context.Context, reason string)
 }
 
 // ensureRuntimeCacheFresh synchronizes plugin runtime caches with the shared
@@ -107,6 +121,7 @@ func (s *serviceImpl) markRuntimeCacheChanged(ctx context.Context, reason string
 	if s == nil || s.runtimeCacheRevisionCtrl == nil {
 		return nil
 	}
+	s.InvalidateManagementListCache(ctx, reason)
 	revision, err := s.runtimeCacheRevisionCtrl.MarkChanged(ctx)
 	if err != nil {
 		return err

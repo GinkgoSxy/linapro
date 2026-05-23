@@ -93,6 +93,13 @@ type pluginStartupTenantProvisioner interface {
 	ReconcileAutoEnabledTenantPlugins(ctx context.Context) error
 }
 
+// pluginManagementListPrewarmer is the startup-only contract for warming the
+// plugin management read model after runtime plugin state has converged.
+type pluginManagementListPrewarmer interface {
+	// PrewarmManagementList builds the complete plugin management list read model and returns build errors to the caller.
+	PrewarmManagementList(ctx context.Context) error
+}
+
 // newHTTPStartupContext creates the context shared by one HTTP startup
 // orchestration pass. It carries only short-lived snapshots and statistics.
 func newHTTPStartupContext(ctx context.Context, runtime *httpRuntime) (context.Context, *startupstats.Collector, error) {
@@ -429,6 +436,7 @@ func finishHTTPRuntimeAfterSourceRoutes(ctx context.Context, runtime *httpRuntim
 	}); err != nil {
 		return err
 	}
+	startHTTPPluginManagementListPrewarm(ctx, runtime.pluginSvc)
 	return nil
 }
 
@@ -456,6 +464,32 @@ func validateHTTPStartupPluginConsistency(ctx context.Context, pluginSvc pluginS
 		logger.Panicf(ctx, "plugin startup consistency validation failed: %v", err)
 	}
 	return err
+}
+
+// startHTTPPluginManagementListPrewarm warms the plugin management read model
+// after startup convergence without delaying HTTP availability.
+func startHTTPPluginManagementListPrewarm(ctx context.Context, pluginSvc pluginManagementListPrewarmer) {
+	if pluginSvc == nil {
+		return
+	}
+	prewarmCtx := context.WithoutCancel(ctx)
+	go func() {
+		startedAt := time.Now()
+		if err := pluginSvc.PrewarmManagementList(prewarmCtx); err != nil {
+			logger.Debugf(
+				prewarmCtx,
+				"prewarm plugin management list finished status=failed duration=%s",
+				time.Since(startedAt).Round(time.Millisecond),
+			)
+			logger.Warningf(prewarmCtx, "prewarm plugin management list failed: %v", err)
+			return
+		}
+		logger.Debugf(
+			prewarmCtx,
+			"prewarm plugin management list finished status=succeeded duration=%s",
+			time.Since(startedAt).Round(time.Millisecond),
+		)
+	}()
 }
 
 // logHTTPStartupSummary emits the startup metric summary without ORM SQL text.

@@ -477,6 +477,8 @@ type RegistryQueryService interface {
 	List(ctx context.Context, in ListInput) (*ListOutput, error)
 	// Get returns one read-only plugin detail projection by exact plugin ID.
 	Get(ctx context.Context, pluginID string) (*PluginItem, error)
+	// PrewarmManagementList builds the complete plugin management list read model.
+	PrewarmManagementList(ctx context.Context) error
 	// PreviewRuntimeUpgrade returns a side-effect-free upgrade preview for one pending plugin.
 	PreviewRuntimeUpgrade(ctx context.Context, pluginID string) (*RuntimeUpgradePreview, error)
 	// ExecuteRuntimeUpgrade runs one explicit runtime upgrade after confirmation.
@@ -566,6 +568,8 @@ type serviceImpl struct {
 	runtimeCacheRevisionCtrl *pluginruntimecache.Controller
 	// runtimeUpgradeLockStore coordinates explicit runtime upgrades across cluster nodes.
 	runtimeUpgradeLockStore coordination.LockStore
+	// managementListCache stores the complete plugin-management read model.
+	managementListCache pluginManagementListCache
 	// tenantSvc validates tenant-governance startup state through the runtime-owned tenant capability.
 	tenantSvc tenantcapsvc.Service
 	// runtimeUpgradeLocksMu protects process-local runtime-upgrade locks.
@@ -608,19 +612,12 @@ func New(
 	}
 
 	var (
-		catalogSvc       = catalog.New(configProvider)
-		lifecycleSvc     = lifecycle.New(catalogSvc)
-		frontendSvc      = frontend.New(catalogSvc)
-		openapiSvc       = openapi.New(catalogSvc)
-		runtimeSvc       = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nSvc)
-		integrationSvc   = integration.New(catalogSvc)
-		cacheRevisionCtl = newRuntimeCacheRevisionController(
-			topo,
-			cacheCoordSvc,
-			integrationSvc,
-			frontendSvc,
-			i18nSvc,
-		)
+		catalogSvc     = catalog.New(configProvider)
+		lifecycleSvc   = lifecycle.New(catalogSvc)
+		frontendSvc    = frontend.New(catalogSvc)
+		openapiSvc     = openapi.New(catalogSvc)
+		runtimeSvc     = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nSvc)
+		integrationSvc = integration.New(catalogSvc)
 	)
 
 	// Wire cross-package dependencies via setter injection so each sub-package
@@ -651,19 +648,26 @@ func New(
 	runtimeSvc.SetSessionStore(sessionStore)
 
 	service := &serviceImpl{
-		configSvc:                configProvider,
-		topology:                 topo,
-		catalogSvc:               catalogSvc,
-		lifecycleSvc:             lifecycleSvc,
-		runtimeSvc:               runtimeSvc,
-		integrationSvc:           integrationSvc,
-		frontendSvc:              frontendSvc,
-		openapiSvc:               openapiSvc,
-		i18nSvc:                  i18nSvc,
-		runtimeCacheRevisionCtrl: cacheRevisionCtl,
-		runtimeUpgradeLockStore:  runtimeUpgradeLockStore,
-		runtimeUpgradeLocks:      make(map[string]*sync.Mutex),
+		configSvc:               configProvider,
+		topology:                topo,
+		catalogSvc:              catalogSvc,
+		lifecycleSvc:            lifecycleSvc,
+		runtimeSvc:              runtimeSvc,
+		integrationSvc:          integrationSvc,
+		frontendSvc:             frontendSvc,
+		openapiSvc:              openapiSvc,
+		i18nSvc:                 i18nSvc,
+		runtimeUpgradeLockStore: runtimeUpgradeLockStore,
+		runtimeUpgradeLocks:     make(map[string]*sync.Mutex),
 	}
+	service.runtimeCacheRevisionCtrl = newRuntimeCacheRevisionController(
+		topo,
+		cacheCoordSvc,
+		integrationSvc,
+		frontendSvc,
+		i18nSvc,
+		service,
+	)
 	runtimeSvc.SetRuntimeCacheChangeNotifier(service)
 	runtimeSvc.SetDependencyValidator(service)
 	service.sourceUpgradeSvc = sourceupgradeinternal.New(catalogSvc, lifecycleSvc, runtimeSvc, integrationSvc, i18nSvc, service)

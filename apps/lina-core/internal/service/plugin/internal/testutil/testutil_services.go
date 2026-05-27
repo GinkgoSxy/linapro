@@ -77,7 +77,8 @@ func NewServices() *Services {
 		lifecycleSvc   = lifecycle.New(catalogSvc)
 		frontendSvc    = frontend.New(catalogSvc)
 		openapiSvc     = openapi.New(catalogSvc)
-		runtimeSvc     = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nService)
+		lockerSvc      = locker.New()
+		runtimeSvc     = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nService, lockerSvc)
 		integrationSvc = integration.New(catalogSvc)
 		topology       = singleNodeTopology{}
 		kvCacheSvc     = kvcache.New()
@@ -85,7 +86,7 @@ func NewServices() *Services {
 		notifySvc      = notify.New(tenantSvc)
 		capabilitySvc  = newTestCapabilities()
 	)
-	hostLockSvc := mustNewHostLockServiceForTest()
+	hostLockSvc := mustNewHostLockServiceForTest(lockerSvc)
 
 	catalogSvc.SetBackendLoader(integrationSvc)
 	catalogSvc.SetArtifactParser(runtimeSvc)
@@ -135,8 +136,8 @@ func NewServices() *Services {
 
 // mustNewHostLockServiceForTest creates the host-lock dependency used by wasm
 // bridge tests. A failure means the fixture wiring is invalid.
-func mustNewHostLockServiceForTest() hostlock.Service {
-	service, err := hostlock.New(locker.New())
+func mustNewHostLockServiceForTest(lockerSvc locker.Service) hostlock.Service {
+	service, err := hostlock.New(lockerSvc)
 	if err != nil {
 		panic(fmt.Sprintf("configure test host lock service: %v", err))
 	}

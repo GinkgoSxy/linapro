@@ -36,6 +36,7 @@ import (
 	jobhandlersvc "lina-core/internal/service/jobhandler"
 	jobmgmtsvc "lina-core/internal/service/jobmgmt"
 	"lina-core/internal/service/kvcache"
+	"lina-core/internal/service/locker"
 	"lina-core/internal/service/menu"
 	"lina-core/internal/service/middleware"
 	"lina-core/internal/service/notify"
@@ -984,7 +985,7 @@ func newRouteBindingTestRuntime(ctx context.Context) *httpRuntime {
 	sessionStore := session.NewDBStore()
 	cacheCoordSvc := cachecoord.Default(clusterSvc)
 	i18nService := i18nsvc.New(bizCtxSvc, configSvc, cacheCoordSvc)
-	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nService, sessionStore, nil)
+	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nService, sessionStore, locker.New(), nil)
 	if err != nil {
 		panic(err)
 	}

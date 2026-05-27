@@ -12,6 +12,7 @@ import (
 
 	"lina-core/internal/model/entity"
 	i18nsvc "lina-core/internal/service/i18n"
+	"lina-core/internal/service/locker"
 	"lina-core/internal/service/plugin/internal/catalog"
 	"lina-core/internal/service/plugin/internal/frontend"
 	"lina-core/internal/service/plugin/internal/lifecycle"
@@ -375,6 +376,8 @@ type serviceImpl struct {
 	menuFilter PermissionMenuFilter
 	// cacheChangeNotifier publishes runtime cache changes after successful convergence.
 	cacheChangeNotifier CacheChangeNotifier
+	// reconcilerLockSvc serializes primary lifecycle side effects per dynamic plugin.
+	reconcilerLockSvc locker.Service
 	// dependencyValidator checks candidate release dependency constraints before
 	// dynamic lifecycle side effects.
 	dependencyValidator DependencyValidator
@@ -407,6 +410,7 @@ func New(
 	frontendSvc frontend.Service,
 	openapiSvc openapi.Service,
 	i18nSvc runtimeI18nService,
+	reconcilerLockSvc locker.Service,
 ) Service {
 	return &serviceImpl{
 		catalogSvc:                 catalogSvc,
@@ -414,6 +418,7 @@ func New(
 		frontendSvc:                frontendSvc,
 		openapiSvc:                 openapiSvc,
 		sessionStore:               session.NewDBStore(),
+		reconcilerLockSvc:          reconcilerLockSvc,
 		reconcilerRevisionObserved: pluginruntimecache.NewObservedRevision(),
 		i18nSvc:                    i18nSvc,
 	}

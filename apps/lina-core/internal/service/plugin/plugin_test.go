@@ -15,6 +15,7 @@ import (
 	configsvc "lina-core/internal/service/config"
 	"lina-core/internal/service/coordination"
 	i18nsvc "lina-core/internal/service/i18n"
+	"lina-core/internal/service/locker"
 	"lina-core/internal/service/plugin/internal/catalog"
 	"lina-core/internal/service/session"
 	"lina-core/pkg/plugin/capability"
@@ -43,7 +44,7 @@ func newTestServiceWithTopology(topology Topology) *serviceImpl {
 		cachecoord.DefaultWithCoordination(topology, coordSvc)
 		cacheCoordSvc = cachecoord.Default(topology)
 		i18nSvc := i18nsvc.New(bizCtxProvider, configProvider, cacheCoordSvc)
-		service, err := New(topology, configProvider, bizCtxProvider, cacheCoordSvc, i18nSvc, session.NewDBStore(), coordSvc.Lock())
+		service, err := New(topology, configProvider, bizCtxProvider, cacheCoordSvc, i18nSvc, session.NewDBStore(), locker.New(), coordSvc.Lock())
 		if err != nil {
 			panic(err)
 		}
@@ -56,7 +57,7 @@ func newTestServiceWithTopology(topology Topology) *serviceImpl {
 		return serviceImpl
 	}
 	i18nSvc := i18nsvc.New(bizCtxProvider, configProvider, cacheCoordSvc)
-	service, err := New(topology, configProvider, bizCtxProvider, cacheCoordSvc, i18nSvc, session.NewDBStore(), nil)
+	service, err := New(topology, configProvider, bizCtxProvider, cacheCoordSvc, i18nSvc, session.NewDBStore(), locker.New(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +177,7 @@ func (s *rootTestCapabilities) TenantFilter() contract.TenantFilterService { ret
 // TestNewRequiresExplicitRuntimeDependencies verifies the root plugin service
 // returns a construction error when callers omit critical runtime dependencies.
 func TestNewRequiresExplicitRuntimeDependencies(t *testing.T) {
-	if _, err := New(nil, nil, nil, nil, nil, nil, nil); err == nil {
+	if _, err := New(nil, nil, nil, nil, nil, nil, nil, nil); err == nil {
 		t.Fatal("expected plugin service construction to return an error without explicit dependencies")
 	}
 }

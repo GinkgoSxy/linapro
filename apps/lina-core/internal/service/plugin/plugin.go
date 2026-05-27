@@ -15,6 +15,7 @@ import (
 	configsvc "lina-core/internal/service/config"
 	"lina-core/internal/service/coordination"
 	i18nsvc "lina-core/internal/service/i18n"
+	"lina-core/internal/service/locker"
 	"lina-core/internal/service/plugin/internal/catalog"
 	"lina-core/internal/service/plugin/internal/frontend"
 	"lina-core/internal/service/plugin/internal/integration"
@@ -603,6 +604,8 @@ type serviceImpl struct {
 // New creates and returns a new plugin Service.
 // Pass a non-nil topology for cluster-aware deployments; pass nil to use the
 // default single-node topology implementation.
+// reconcilerLockSvc must be created by the startup composition root and shared
+// with host-lock services that use the same deployment-selected locker backend.
 func New(
 	topology Topology,
 	configProvider configsvc.Service,
@@ -610,6 +613,7 @@ func New(
 	cacheCoordSvc cachecoord.Service,
 	i18nSvc i18nsvc.Service,
 	sessionStore session.Store,
+	reconcilerLockSvc locker.Service,
 	runtimeUpgradeLockStore coordination.LockStore,
 ) (Service, error) {
 	if configProvider == nil {
@@ -627,6 +631,9 @@ func New(
 	if sessionStore == nil {
 		return nil, gerror.New("plugin service requires a non-nil session store")
 	}
+	if reconcilerLockSvc == nil {
+		return nil, gerror.New("plugin service requires a non-nil reconciler lock service")
+	}
 
 	var topo Topology = singleNodeTopology{}
 	if topology != nil {
@@ -638,7 +645,7 @@ func New(
 		lifecycleSvc   = lifecycle.New(catalogSvc)
 		frontendSvc    = frontend.New(catalogSvc)
 		openapiSvc     = openapi.New(catalogSvc)
-		runtimeSvc     = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nSvc)
+		runtimeSvc     = runtime.New(catalogSvc, lifecycleSvc, frontendSvc, openapiSvc, i18nSvc, reconcilerLockSvc)
 		integrationSvc = integration.New(catalogSvc)
 	)
 

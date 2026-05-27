@@ -197,9 +197,10 @@ func newHTTPRuntime(ctx context.Context, configSvc config.Service) (*httpRuntime
 		sessionStore  = session.NewDBStore()
 		cacheCoordSvc = cachecoord.Default(clusterSvc)
 		i18nSvc       = i18nsvc.New(bizCtxSvc, configSvc, cacheCoordSvc)
+		lockerSvc     = locker.New()
 		lockStore     = runtimeUpgradeLockStore(coordinationSvc)
 	)
-	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nSvc, sessionStore, lockStore)
+	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nSvc, sessionStore, lockerSvc, lockStore)
 	if err != nil {
 		closeHTTPCoordinationAfterInitError(ctx, coordinationSvc)
 		return nil, err
@@ -264,7 +265,7 @@ func newHTTPRuntime(ctx context.Context, configSvc config.Service) (*httpRuntime
 	pluginSvc.SetTenantStartupCapability(tenantSvc)
 	pluginSvc.SetTenantProvisioningCapability(tenantSvc)
 	pluginSvc.SetTenantPlatformGovernanceCapability(tenantSvc)
-	hostLockSvc, err := hostlock.New(locker.New())
+	hostLockSvc, err := hostlock.New(lockerSvc)
 	if err != nil {
 		closeHTTPCoordinationAfterInitError(ctx, coordinationSvc)
 		return nil, err

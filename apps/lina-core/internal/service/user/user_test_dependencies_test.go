@@ -14,6 +14,7 @@ import (
 	"lina-core/internal/service/datascope"
 	i18nsvc "lina-core/internal/service/i18n"
 	"lina-core/internal/service/kvcache"
+	"lina-core/internal/service/locker"
 	"lina-core/internal/service/notify"
 	pluginsvc "lina-core/internal/service/plugin"
 	"lina-core/internal/service/pluginhostservices"
@@ -31,7 +32,7 @@ func newUserTestService(tenantRuntimes ...tenantcapsvc.ProviderRuntime) Service 
 	cacheCoordSvc := cachecoord.Default(clusterSvc)
 	i18nSvc := i18nsvc.New(bizCtxSvc, configSvc, cacheCoordSvc)
 	sessionStore := session.NewDBStore()
-	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nSvc, sessionStore, nil)
+	pluginSvc, err := pluginsvc.New(clusterSvc, configSvc, bizCtxSvc, cacheCoordSvc, i18nSvc, sessionStore, locker.New(), nil)
 	if err != nil {
 		panic(err)
 	}

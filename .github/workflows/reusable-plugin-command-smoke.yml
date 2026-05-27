@@ -71,7 +71,7 @@ jobs:
           git -C "$source_dir" add .
           git -C "$source_dir" commit -q -m "initial plugin"
 
-          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin"
+          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin/capability"
           cp Makefile "$smoke_root/Makefile"
           cp -R hack/makefiles "$smoke_root/hack/makefiles"
           cp -R hack/tools/linactl "$smoke_root/hack/tools/linactl"

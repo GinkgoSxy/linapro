@@ -76,7 +76,7 @@ jobs:
           backend_port=18080
           frontend_port=15666
 
-          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin" "$smoke_root/apps/lina-core/manifest/config" "$smoke_root/apps/lina-core/manifest/sql" "$smoke_root/apps/lina-core/manifest/i18n/en-US" "$smoke_root/apps/lina-core/internal/packed/manifest" "$smoke_root/apps/lina-vben/node_modules/.bin" "$smoke_root/apps/lina-vben/apps/web-antd"
+          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin/capability" "$smoke_root/apps/lina-core/manifest/config" "$smoke_root/apps/lina-core/manifest/sql" "$smoke_root/apps/lina-core/manifest/i18n/en-US" "$smoke_root/apps/lina-core/internal/packed/manifest" "$smoke_root/apps/lina-vben/node_modules/.bin" "$smoke_root/apps/lina-vben/apps/web-antd"
           cp Makefile "$smoke_root/Makefile"
           cp -R hack/makefiles "$smoke_root/hack/makefiles"
           cp -R hack/tools/linactl "$smoke_root/hack/tools/linactl"
@@ -161,7 +161,7 @@ jobs:
 
           smoke_root="$RUNNER_TEMP/wasm-command-root"
 
-          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin" "$smoke_root/apps/lina-plugins/demo-dynamic"
+          mkdir -p "$smoke_root/hack/tools" "$smoke_root/apps/lina-core/pkg/plugin/capability" "$smoke_root/apps/lina-plugins/demo-dynamic"
           cp Makefile "$smoke_root/Makefile"
           cp -R hack/makefiles "$smoke_root/hack/makefiles"
           cp -R hack/tools/linactl "$smoke_root/hack/tools/linactl"

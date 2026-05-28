@@ -6,27 +6,19 @@
 ## Requirements
 ### Requirement:插件配置服务提供通用只读配置访问
 
-系统 SHALL 通过`apps/lina-core/pkg/pluginservice/config`向源码插件提供业务无关的只读插件配置访问服务。该服务 MUST 默认作用域到当前插件 ID，只允许源码插件读取当前插件自己的运行期配置，不得暴露任意宿主静态配置树，也不得要求插件配置键位于宿主全局配置前缀下。
+系统 SHALL 通过`apps/lina-core/pkg/plugin/capability/config`向源码插件提供业务无关的只读配置访问服务。该服务必须允许源码插件通过任意配置键读取宿主配置文件内容，不得为特定插件或业务模块暴露插件特定的`GetXxx()`配置方法。
 
-#### Scenario:源码插件读取自身配置键
+#### Scenario:插件读取任意配置键
 
-- **WHEN** 源码插件`plugin-a`通过插件配置服务读取`storage.endpoint`
-- **AND** `plugin-a`的运行期配置中存在该键
-- **THEN** 系统返回`plugin-a`作用域下的配置值
-- **AND** 插件调用方不需要在读取键中携带`plugin-a`前缀
-
-#### Scenario:源码插件不能通过配置服务读取宿主私有配置
-
-- **WHEN** 源码插件通过插件配置服务读取宿主私有配置键，例如`database.default.link`或`server.jwt.secret`
-- **AND** 该键不属于当前插件运行期配置来源
-- **THEN** 系统不得返回宿主全局配置值
-- **AND** 调用结果 MUST 表达为未找到或拒绝访问，而不是回退到宿主`g.Cfg()`完整配置树
+- **WHEN** 源码插件通过插件配置服务读取现有配置键
+- **THEN** 系统返回该键的配置值
+- **AND** 配置服务不要求键位于插件特定前缀下
 
 #### Scenario:公共组件不包含插件业务配置方法
 
 - **WHEN** 为源码插件添加或修改私有配置结构
 - **THEN** 开发者在插件内部定义配置结构、默认值和验证逻辑
-- **AND** 无需在`apps/lina-core/pkg/pluginservice/config`中添加插件特定的`GetXxx()`方法或插件业务配置类型
+- **AND** 无需在`apps/lina-core/pkg/plugin/capability/config`中添加插件特定的`GetXxx()`方法或插件业务配置类型
 
 ### Requirement:插件配置服务支持结构体扫描和基本类型读取
 

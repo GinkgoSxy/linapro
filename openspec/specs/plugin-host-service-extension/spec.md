@@ -5,13 +5,14 @@
 ## Requirements
 ### Requirement: 动态插件通过版本化宿主服务协议获取全部宿主能力
 
-系统 SHALL 在保留`lina_env.host_call`入口的前提下，为动态插件提供版本化的宿主服务调用协议，并要求全部宿主能力通过统一宿主服务通道发布，而不是继续线性增加新的专用 opcode。
+系统 SHALL 在保留`lina_env.host_call`入口的前提下，为动态插件提供版本化的宿主服务调用协议。动态插件访问宿主能力时 MUST 通过统一宿主服务通道进入`pluginservice`能力目录或其受控适配器，而不是继续线性增加新的专用 opcode，也不得让`pluginbridge`成为与源码插件平行的宿主能力语义 owner。
 
 #### Scenario: Guest 调用结构化宿主服务
 
 - **WHEN** guest SDK 发起一次宿主服务调用
-- **THEN** 宿主通过统一请求 envelope 解析`service`、`method`、资源标识（如`storage.resources.paths`、URL 模式或`table`）和请求载荷
+- **THEN** 宿主通过统一请求 envelope 解析`service`、`method`、资源标识（如`storage.resources.paths`、URL 模式、`table`、pluginservice capability ID 或 manifest 资源路径）和请求载荷
 - **AND** 宿主服务注册表定位对应的服务处理器
+- **AND** 服务处理器委托到`pluginservice`能力目录、`orgcap.Service`、`tenantcap.Service`或其他受控宿主适配器
 - **AND** 宿主以统一响应 envelope 返回业务结果或结构化错误
 
 #### Scenario: 未知 service 或 method 被拒绝
@@ -25,6 +26,14 @@
 - **WHEN** 宿主收敛当前动态插件能力模型
 - **THEN** 已实现的日志、状态和数据访问能力也通过统一宿主服务协议对 guest 暴露
 - **AND** 宿主不得继续维护面向插件的平行公开协议
+
+#### Scenario: 动态插件消费 Pluginservice Capability
+
+- **WHEN** 动态插件通过 guest SDK 调用`framework.org.v1`
+- **THEN** host service handler 校验动态插件的`hostServices`授权
+- **AND** 调用进入`pluginservice.Services.Org()`对应的消费 service
+- **AND** 如该动态插件需要硬依赖具体 provider 插件，则由既有`dependencies.plugins`在生命周期路径中校验
+- **AND** `pluginbridge`仅承担 transport 和 payload 编解码职责
 
 ### Requirement: 宿主服务访问同时受宿主服务声明推导的能力分类和资源授权约束
 
@@ -92,26 +101,22 @@
 - **AND** 宿主默认不记录敏感请求体和敏感响应体原文
 
 ### Requirement: 插件宿主服务适配器必须由宿主运行期统一构造
+系统 SHALL 由宿主运行期统一构造并发布源码插件和动态插件 host service 适配器。适配器 MUST 复用启动期共享的宿主服务实例或共享后端，MUST 不在插件调用路径中自行构造孤立宿主服务图。源码插件和动态插件访问同一宿主能力时 MUST 共享`pluginservice`能力目录语义，动态插件 host service handler 只作为 transport 适配层。
 
-系统 SHALL 由宿主运行期统一构造并发布源码插件和动态插件 host service 适配器。适配器 MUST 复用启动期共享的宿主服务实例或共享后端，MUST 不在插件调用路径中自行构造孤立宿主服务图。
-
-#### Scenario: 源码插件使用宿主能力目录
-
-- **WHEN** 源码插件调用`pkg/plugin/capability`发布的宿主能力
-- **THEN** 该能力目录由宿主运行期构造并通过源码插件 registrar 或 callback 输入传递给插件
-- **AND** 能力目录复用宿主共享的 auth、session、notify、config、i18n、pluginstate、org、tenant、cache 或其他依赖
-- **AND** 插件生产路径不得无参创建该能力目录或对应适配器
+#### Scenario: 源码插件使用宿主服务适配器
+- **WHEN** 源码插件调用`pkg/pluginservice/*`发布的宿主能力
+- **THEN** 该能力适配器由宿主运行期构造并通过 registrar 传递给插件
+- **AND** 适配器复用宿主共享的 auth、session、notify、config、i18n、pluginstate、orgcap、tenantcap 或其他依赖
+- **AND** 插件生产路径不得无参创建该适配器
 
 #### Scenario: 动态插件 host service 调用共享宿主能力
-
-- **WHEN** 动态插件通过统一 host service 协议调用 cache、lock、notify、config、runtime、storage 或 data 等宿主能力
+- **WHEN** 动态插件通过统一 host service 协议调用 cache、lock、notify、config、runtime、storage、data 或 pluginservice capability 等宿主能力
 - **THEN** host service handler 使用插件 runtime 注入的共享宿主服务或共享后端
-- **AND** handler 不得在每次调用中创建独立 cache、lock、notify、config 或 plugin service 实例
+- **AND** handler 不得在每次调用中创建独立 cache、lock、notify、config、plugin service 或 capability manager 实例
 
 #### Scenario: WASM host service 配置入口由启动期注入
-
 - **WHEN** 宿主启动并初始化 WASM host service
-- **THEN** 启动路径显式配置 cache、lock、notify、storage、config、runtime 和 framework capability 等 host service 的共享依赖
+- **THEN** 启动路径显式配置 cache、lock、notify、storage、config、runtime、orgcap、tenantcap 和 pluginservice 等 host service 的共享依赖
 - **AND** 包级默认实例不得在生产启动后继续作为实际运行依赖
 
 ### Requirement: 源码插件宿主服务适配器必须归属 plugin 内部 hostservices 子组件
@@ -261,4 +266,64 @@
 - **WHEN** 动态插件在`config`、`hostConfig`或`manifest`服务中声明`set`、`save`、`reload`或其他非`get`方法
 - **THEN** 构建器或宿主清单校验拒绝该声明
 - **AND** 运行时不得为该插件派生对应宿主服务能力
+
+### Requirement: capability 必须作为源码插件和动态插件的统一能力集合
+
+系统 SHALL 将`pkg/plugin/capability`定义为插件消费宿主能力的统一集合，并将根接口命名为`capability.Services`。源码插件 MUST 通过 registrar 或等价上下文获取 capability services；动态插件 MUST 通过 guest client 和 host service handler 进入同一组服务语义；两类插件不得分别使用不同组件暴露同一能力。
+
+#### Scenario: 源码插件和动态插件读取同一能力
+
+- **WHEN** 源码插件和动态插件分别消费插件作用域配置、宿主公开配置、manifest、数据服务或框架 capability
+- **THEN** 二者共享同一 service 契约、授权边界、错误语义和降级策略
+- **AND** 仅 transport 和运行时加载方式存在差异
+
+#### Scenario: 新能力只注册到统一目录
+
+- **WHEN** 系统新增一个插件可消费宿主能力
+- **THEN** 该能力必须注册到`pkg/plugin/capability`根服务集合或其子包
+- **AND** 动态插件的 host service handler 只把 bridge 请求映射到该统一服务集合
+
+### Requirement: 动态 hostServices 与 capability services 必须语义分层
+
+系统 SHALL 保留动态插件 manifest 中的`hostServices`作为授权声明和 bridge transport 调用面，同时将宿主能力语义归属到`pkg/plugin/capability`和`capability.Services`。`hostServices`不得被重新解释为 Go 公共能力集合名称，`capability`也不得绕过动态插件授权快照直接授予动态插件访问权。
+
+#### Scenario: 动态插件声明 hostServices
+
+- **WHEN** 动态插件在`plugin.yaml`中声明`hostServices`
+- **THEN** 该声明表示动态插件申请调用的 service、method 和资源边界
+- **AND** 宿主在安装、启用或升级阶段生成授权快照
+- **AND** 该声明不改变`pkg/plugin/capability`中能力契约的 owner
+
+#### Scenario: 动态插件通过 capability guest client 调用宿主能力
+
+- **WHEN** 动态插件调用`pkg/plugin/capability/guest`中的能力 client
+- **THEN** guest client 通过`pkg/plugin/pluginbridge/guest`raw transport 发起 host service 调用
+- **AND** 宿主先校验`hostServices`授权快照
+- **AND** 授权通过后再委托到同一`capability.Services`能力集合
+- **AND** `RuntimeHostService`、`StorageHostService`、`ConfigHostService`、`DataHostService`等 guest 能力 client 接口、默认实例、WASI 实现和非 WASI stub 均归属`pkg/plugin/capability/guest`
+- **AND** `pkg/plugin/pluginbridge/guest`只提供 raw host call transport、guest runtime 和 route binding，不拥有宿主能力 client 语义
+- **AND** 能力 client 方法签名中的 host service DTO、cron 合约、日志等级和 codec 均直接使用`pkg/plugin/pluginbridge/protocol`，`capability/guest`不得重复导出这些协议别名
+
+#### Scenario: 动态插件通过 data SDK 调用宿主 data 能力
+
+- **WHEN** 动态插件调用`pkg/plugin/capability/data`中的 ORM-style data SDK
+- **THEN** data SDK 通过`pkg/plugin/pluginbridge/guest`raw transport 和`pkg/plugin/pluginbridge/protocol`协议 DTO 发起 data host service 调用
+- **AND** 宿主先校验`hostServices`中的 data 授权快照、资源表和方法范围
+- **AND** 授权通过后再执行同一 data host service 治理路径
+
+### Requirement: pluginservice 必须作为源码插件和动态插件的统一能力目录
+
+系统 SHALL 将`pkg/pluginservice`定义为插件消费宿主能力的统一目录。源码插件 MUST 通过 registrar 或等价上下文获取`pluginservice.Services`；动态插件 MUST 通过 guest client 和 host service handler 进入同一组服务语义；两类插件不得分别使用不同组件暴露同一能力。
+
+#### Scenario: 源码插件和动态插件读取同一能力
+
+- **WHEN** 源码插件和动态插件分别消费插件作用域配置、宿主公开配置、manifest、数据服务或 pluginservice capability
+- **THEN** 二者共享同一 service 契约、授权边界、错误语义和降级策略
+- **AND** 仅 transport 和运行时加载方式存在差异
+
+#### Scenario: 新能力只注册到统一目录
+
+- **WHEN** 系统新增一个插件可消费宿主能力
+- **THEN** 该能力必须注册到`pluginservice.Services`或其子目录
+- **AND** 动态插件的 host service handler 只把 bridge 请求映射到该统一目录
 

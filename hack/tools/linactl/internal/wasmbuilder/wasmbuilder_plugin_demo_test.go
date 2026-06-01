@@ -27,6 +27,7 @@ func TestPluginDemoDynamicRuntimeArtifactEmbedsReviewedAssets(t *testing.T) {
 
 	pluginDir := filepath.Join(repoRoot, "apps", "lina-plugins", "linapro-demo-dynamic")
 	requireOfficialPluginDemoDynamic(t, pluginDir)
+	prepareIgnoredPluginDemoDynamicRuntimeConfigForTest(t, pluginDir)
 	prepareTemporaryPluginGoWorkForTest(t, repoRoot)
 	expectedFrontendAssets := mustCollectSourceFrontendAssets(t, pluginDir)
 	expectedInstallSQLAssets := mustCollectSourceSQLAssets(t, pluginDir, "manifest/sql")
@@ -209,6 +210,37 @@ func requireOfficialPluginDemoDynamic(t *testing.T, pluginDir string) {
 		}
 		t.Fatalf("stat dynamic demo plugin manifest failed: %v", err)
 	}
+}
+
+// prepareIgnoredPluginDemoDynamicRuntimeConfigForTest mirrors the local plugin
+// runtime config file that is intentionally ignored by git but required in the
+// packaged dynamic artifact contract.
+func prepareIgnoredPluginDemoDynamicRuntimeConfigForTest(t *testing.T, pluginDir string) {
+	t.Helper()
+
+	configPath := filepath.Join(pluginDir, "manifest", "config", "config.yaml")
+	if info, err := os.Stat(configPath); err == nil {
+		if info.IsDir() {
+			t.Fatalf("dynamic demo runtime config path is a directory: %s", configPath)
+		}
+		return
+	} else if !os.IsNotExist(err) {
+		t.Fatalf("stat dynamic demo runtime config failed: %v", err)
+	}
+
+	templatePath := filepath.Join(pluginDir, "manifest", "config", "config.example.yaml")
+	content, err := os.ReadFile(templatePath)
+	if err != nil {
+		t.Fatalf("read dynamic demo runtime config template failed: %v", err)
+	}
+	if err = os.WriteFile(configPath, content, 0o644); err != nil {
+		t.Fatalf("write dynamic demo runtime config fixture failed: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Remove(configPath); err != nil && !os.IsNotExist(err) {
+			t.Fatalf("remove dynamic demo runtime config fixture failed: %v", err)
+		}
+	})
 }
 
 // assertGeneratedWasmDispatcherDidNotLeak verifies temporary generated source

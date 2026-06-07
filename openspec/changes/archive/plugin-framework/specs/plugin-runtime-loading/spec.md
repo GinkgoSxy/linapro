@@ -396,3 +396,44 @@
 - **WHEN** 动态插件读取 artifact 中的配置或 manifest 资源
 - **THEN** 系统使用 artifact 资源视图返回内容
 - **AND** 响应不得暴露宿主本地 artifact 存储绝对路径作为插件可用资源路径
+
+### Requirement:动态插件运行时资源视图必须包含完整 manifest 资源
+
+系统 SHALL 在动态插件运行时加载时从 active release artifact 构建插件资源视图。该视图 MUST 包含 artifact 实际携带的`manifest/`目录下所有可投影文件，包括`manifest/config/`、`manifest/sql/`、`manifest/i18n/`和插件自定义资源目录中的文件原文。该视图 MUST 绑定当前 active release 的 checksum 或 generation，同版本刷新后使用最新资源。
+
+#### Scenario:动态插件加载 SQL 和 i18n 资源原文
+
+- **WHEN** 动态插件 active release artifact 携带`manifest/sql/001-schema.sql`和`manifest/i18n/zh-CN/plugin.json`
+- **THEN** 运行时资源视图包含相对路径`sql/001-schema.sql`和`i18n/zh-CN/plugin.json`
+- **AND** 已授权的插件可通过`manifest.get`读取这些文件原文
+- **AND** 该资源视图不执行 SQL、不加载翻译资源
+
+### Requirement: 插件运行时列表必须复用批量 manifest 读取
+
+系统 SHALL 在插件 runtime state 列表、启动投影和等价高频插件状态查询路径中批量读取 manifest 数据。列表实现 MUST NOT 在按 registry 循环时逐项调用会重新扫描 source/dynamic manifests 的单项读取方法；动态插件 `.wasm` artifact 解析次数 MUST 与本次查询需要的 manifest 集合有界相关。
+
+#### Scenario: runtime state 列表一次性读取 manifests
+
+- **WHEN** 系统查询插件 runtime state 列表
+- **AND** registry 表中存在多个 source 或 dynamic 插件
+- **THEN** 系统在列表调用内复用同一份 manifest map 或等价批量读取结果
+- **AND** 不在每个 registry 行上重新执行完整 `ScanManifests`
+
+### Requirement: 插件 runtime 必需依赖必须在构造或启动阶段校验
+
+系统 SHALL 将插件 runtime 的必需依赖在构造函数或启动校验阶段显式校验。必需的 topology、menu sync、hook dispatch、JWT config、upload size、user context、session store、permission filter、cache change notifier、dependency validator 等能力如果缺失且当前路径不能正确降级，系统 MUST 返回初始化错误或启动错误，而不是通过 nil-safe no-op 静默跳过。
+
+### Requirement:插件管理首屏摘要读模型必须有界读取运行时资源
+
+系统 SHALL 为插件管理首屏列表提供有界的运行时资源读取路径。该路径 MUST 基于轻量 manifest/registry 摘要构建分页列表，MUST NOT 为首屏列表逐插件执行依赖检查、cron 声明收集、动态路由审查或完整 hostServices 授权详情装配。
+
+#### Scenario:列表缓存未命中时运行时发现次数有界
+
+- **WHEN** 管理员请求插件管理列表且摘要读模型缓存未命中
+- **THEN** 后端至多执行一次当前请求范围内的 manifest/artifact 发现来构建轻量摘要 snapshot
+- **AND** 后端不得因为列表中的每个插件再次扫描动态 `wasm` artifact
+
+#### Scenario:预热只优化延迟不承担正确性
+
+- **WHEN** 插件管理摘要预热尚未完成或预热 locale 与当前请求 locale 不一致
+- **THEN** 列表请求仍必须通过同步摘要构建或已有有效缓存返回正确结果

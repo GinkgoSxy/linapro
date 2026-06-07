@@ -189,3 +189,19 @@ TBD - created by archiving change plugin-dependency-management. Update Purpose a
 - **THEN** 插件必须在`hostServices`中声明对应宿主服务、方法和资源边界
 - **AND** 若该动态插件需要硬依赖具体 provider 插件，则继续使用`dependencies.plugins`声明该 provider 插件和版本约束
 - **AND** 系统不得要求或解析`dependencies.capabilities`
+
+### Requirement: 依赖检查结果必须通过 API 和 UI 可见
+
+系统 SHALL 为插件管理的详情和治理动作提供依赖检查结果，包含框架版本检查、依赖插件状态、版本匹配结果、循环依赖和卸载阻断项。首屏插件列表 SHALL NOT 随列表项返回完整依赖检查结果；列表只负责展示摘要治理状态，依赖决策 MUST 在详情、安装、升级或卸载工作流中按需获取。
+
+#### Scenario: 展示阻断原因
+
+- **WHEN** 后端依赖检查返回框架版本不满足、依赖缺失或依赖版本不满足
+- **THEN** 插件管理页面在详情或治理动作弹窗中展示对应阻断原因
+- **AND** 文案使用 i18n 资源而非硬编码文本
+
+#### Scenario: 首屏列表不返回完整依赖检查结果
+
+- **WHEN** 管理员请求插件管理首屏列表
+- **THEN** `GET /plugins`列表项不得包含 `dependencyCheck`
+- **AND** 后端不得为了首屏列表逐插件执行依赖检查

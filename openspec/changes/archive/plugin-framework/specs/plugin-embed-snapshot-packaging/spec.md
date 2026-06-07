@@ -97,3 +97,15 @@
 - **WHEN** 构建动态插件发布产物
 - **THEN** 构建工具不得把插件`manifest/config/config.yaml`复制到`apps/lina-core/manifest/config`
 - **AND** 不得要求插件作者维护宿主全局配置键作为插件运行期配置
+
+### Requirement: 动态插件必须支持通过 go:embed 声明完整 manifest 资源集合
+
+系统 SHALL 允许动态插件通过显式的`go:embed`资源声明文件暴露`plugin.yaml`、`frontend`、`manifest`等资源集合。`manifest`集合 SHALL 保留`manifest/`下所有实际文件的源码路径语义，包括`manifest/config/`、`manifest/sql/`、`manifest/i18n/`和插件实际提供的`manifest/metadata.yaml`。`metadata.yaml` SHALL 只是普通可选资源，不得作为单独 Metadata 服务或必填资源。
+
+### Requirement: 构建器必须完整投影 manifest 资源
+
+系统 SHALL 由动态插件构建器把作者侧`go:embed`资源转换为宿主可治理的 Wasm 自定义节快照。构建器必须从嵌入文件系统或目录扫描中读取完整`manifest/`资源，不再只投影`*.yaml`或排除专用目录。快照区段保留非 YAML manifest 资源，不因为资源不是 YAML 而排除出通用 manifest 资源视图。
+
+### Requirement: 动态插件发布产物必须保留完整 manifest 资源路径语义
+
+动态插件发布产物 SHALL 保留与源码插件一致的插件配置和 manifest 资源路径语义。构建工具不得为`manifest/config/`、`manifest/sql/`、`manifest/i18n/`或插件实际提供的`metadata.yaml`引入不同于源码插件的额外路径约定。已授权插件可通过`Manifest()`读取 SQL 和 i18n 原文资源。

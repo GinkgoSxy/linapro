@@ -326,3 +326,35 @@
 - **WHEN** 系统新增一个插件可消费宿主能力
 - **THEN** 该能力必须注册到`pluginservice.Services`或其子目录
 - **AND** 动态插件的 host service handler 只把 bridge 请求映射到该统一目录
+
+### Requirement: hostServices 必须支持领域服务和领域方法
+
+系统 SHALL 允许动态插件通过`hostServices`声明宿主发布的领域服务和领域方法。领域协议服务名 MUST 使用语言无关的领域名，例如`user`、`authz`、`dict`、`org`、`tenant`、`plugin`和`ai`，不得使用 Go 包名或宿主内部实现名。每个领域方法 MUST 映射到领域能力接口或受控领域适配器。
+
+### Requirement: host service 调用必须传递 CapabilityContext
+
+系统 SHALL 在每一次动态`hostServices`领域调用中构造并传递`CapabilityContext`。该上下文 MUST 包含插件 ID、执行来源、actor、tenant、授权快照、资源或投影标识、系统调用标识和审计摘要。
+
+### Requirement: 动态领域管理方法使用安装授权模型
+
+系统 SHALL 允许动态插件在`hostServices`中声明宿主显式发布的领域管理方法。安装或启用阶段确认授权后，运行时不再额外校验当前用户是否拥有对应工作台菜单或按钮权限；领域管理方法 MUST 继续校验目标资源可见性、租户边界、数据权限、状态机、数量上限和审计来源。
+
+### Requirement: 宿主服务适配器必须适配到 *cap 能力组件
+
+系统 SHALL 要求源码插件 hostservices directory、动态插件 WASM host service handler 和 guest SDK 最终适配到`pkg/plugin/capability/<domain>cap`能力组件。适配层 MUST 不再依赖`capability/contract`具体能力服务接口作为运行时服务目录契约。
+
+### Requirement: 动态插件不得直接消费源码插件租户过滤器
+
+系统 SHALL 禁止动态插件 guest SDK、动态`hostServices`协议和 WASM host service handler 暴露`tenantcap.PluginTableFilterService`、`*gdb.Model`、SQL 片段、DAO 或 query builder。动态插件租户隔离 MUST 通过普通`tenantcap.Service`读取当前租户或校验租户可见性，并由宿主 host service handler 在调用边界执行与宿主 API 等价的数据权限和租户边界过滤。
+
+### Requirement: Go 包重命名不得改变动态插件协议
+
+系统 SHALL 将本次`*cap`包重命名视为 Go 公共包边界重构。动态插件`plugin.yaml hostServices`声明、运行时授权快照、`service`字符串、`method`字符串、资源授权、protobuf envelope、错误 envelope 和审计语义 MUST 保持当前目标模型不变。
+
+### Requirement: 适配器迁移必须复用启动期共享实例
+
+系统 SHALL 在`*cap`包重命名和接口迁移后继续由宿主运行期统一构造 host service 适配器。缓存敏感服务 MUST 复用启动期共享实例或共享后端，不得因包迁移在插件调用路径中临时`New()`关键服务图。
+
+### Requirement: WASM host service 生产依赖必须由启动期显式配置
+
+系统 SHALL 由宿主启动期统一配置 WASM host service dispatcher 所需的 cache、lock、notify、storage config、plugin config、manifest、AI、organization、tenant 和其他 host service 运行期依赖。生产代码中的 WASM host service 包级变量 MUST NOT 默认调用 `New()` 创建关键服务实例。缺失配置 MUST 以显式初始化错误或 host call internal error 暴露。

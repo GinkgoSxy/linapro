@@ -8,6 +8,16 @@
 
 `env.check`只做轻量工具级健康检查，不启动服务、不修改依赖；`env.setup`承接原`dev.setup`语义，用于前端依赖和 Playwright Chromium headless shell。`linactl dev`只等待自己管理的旧进程端口释放，仍拒绝杀死未知外部端口占用。
 
+## GoFrame Code Generation With Target Directory Support
+
+`linactl ctrl`和`linactl dao`支持以下目标选择参数：`p=<plugin-id>`或`plugin=<plugin-id>`定向到`apps/lina-plugins/<plugin-id>/backend`；`dir=<backend-dir>`或`target=<backend-dir>`定向到指定目录；不传目标时默认宿主`apps/lina-core`。
+
+公开命令负责解析目标目录，隐藏`__goframe`子命令仍只接受`gen ctrl`或`gen dao`，并在父进程指定的工作目录中运行内嵌 GoFrame CLI。`dao`会提前校验目标`hack/config.yaml`，`ctrl`只要求目标后端目录存在，避免把 DAO 配置前置条件错误套到只生成 controller 的插件上。任何目标目录都必须包含`hack/config.yaml`，否则命令拒绝执行并返回清晰错误。
+
+根`Makefile`通过`hack/makefiles/database.mk`暴露统一`ctrl`和`dao`目标。`apps/lina-core/Makefile`删除旧`hack/hack-cli.mk`、`hack/hack.mk`依赖和旧`gf`安装/镜像重复入口，只保留宿主相关薄转发。`apps/lina-plugins/Makefile`新增需要`p=<plugin-id>`的聚合`ctrl`和`dao`。
+
+新增根目录共享片段`hack/makefiles/plugin.codegen.mk`，统一维护插件`ctrl`和`dao`目标。所有官方插件根目录`Makefile`改为计算自身`PLUGIN_ROOT`和`REPO_ROOT`后 include 共享片段，通过`$(PLUGIN_ROOT)/backend`推导目标后端目录，不再硬编码具体插件 ID 或`apps/lina-plugins/<plugin-id>/backend`。
+
 ## Agent Resource Bridges
 
 Agent 资源桥接从单一`skills`命令扩展为`agents.<resource>.<action>`命令树，管理`skills`、`prompts`和`md`三类资源。实现分为`internal/agents/common`公共状态机与各资源专属注册表；所有 link/unlink 只操作仓库根内路径，不接受外部 root 参数，不修改`HOME`或系统全局路径。
@@ -57,3 +67,5 @@ release 发布链路以`framework.version`为唯一 tag 基线。`linactl releas
 ## Governance Notes
 
 本分组历史实现修改过开发工具、脚本、workflow、README、Agent skill 和 OpenSpec 文档，按开发工具和文档规则完成过跨平台影响记录。运行时影响均应在对应 owner 变更中审查：本归档压缩不新增 Go、API、SQL、前端、插件或运行时 i18n 变更。测试策略以工具单测、命令 smoke、workflow 语法、shell 语法、OpenSpec 校验、diff 检查和手工触发 dry-run 为主，E2E 仅在具体用户可观察行为变更的 owner 任务中维护。
+
+反馈闭环处理过 FB-1（`make dao`/`make ctrl`只能在宿主或插件后端目录下正确生成）、FB-2（插件根目录 Makefile 硬编码插件后端路径）和 FB-3（Redis cluster smoke 脚本仍调用已移除的`make init`目标）。FB-1 根因为`linactl`的 GoFrame CLI 入口固定使用`apps/lina-core`作为项目目录，修复为支持显式目标目录参数；FB-2 根因为插件 Makefile 硬编码`dir=apps/lina-plugins/<plugin-id>/backend`，修复为引入共享`plugin.codegen.mk`片段；FB-3 根因为 smoke 脚本未同步`db.init`目标重命名，修复为更新命令名称。三项反馈均不修改运行时代码、HTTP API、SQL、前端 UI 或插件运行时契约。

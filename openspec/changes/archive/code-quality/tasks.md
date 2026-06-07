@@ -7,6 +7,8 @@
 - [x] 完成运行期依赖治理：Controller、Middleware、Service、源码插件、host service adapter 和 WASM host service 通过构造函数逐项接收依赖；缓存敏感组件复用启动期共享实例或共享后端；初始化和注册 API 对可预期失败返回`error`。
 - [x] 完成启动效率治理：同一启动编排复用 catalog、integration 和 job snapshots；插件无差异同步不写库、不打开空事务、不重复 post-read；内置任务使用声明投影注册；启动摘要替代默认 SQL 明细。
 - [x] 完成测试效率治理：Go 主单测路径保留`-race`；真实 dynamic Wasm 执行收敛到 smoke；普通插件测试使用 synthetic artifact、fake executor 和轻量 fixture；`linactl test.go`输出测试计划和耗时摘要。
+- [x] 完成 OpenSpec 归档文档治理：建立信息分层、能力 owner 映射、分阶段压缩和验证报告规则；以`plugin-framework`为样板验证后批量压缩全部高体量分组和低体量重复清理；归档体量从约`3.5M`降至约`1.5M`，归档`spec.md`从`277`降至`116`，跨分组重复能力从`61`降至`0`，完全重复主规范副本从`16`降至`0`。
+- [x] 完成 E2E 质量审查增强：在`.agents/rules/testing.md`中新增 E2E 质量审查结果级要求，覆盖触发范围、覆盖有效性、断言有效性、稳定性、严重性分级和审查输出证据；不绑定具体定位器、封装模式或编码实现方式。
 - [x] 反馈`FB-1`~`FB-3`：API 输入 DTO 标签、实现范围和路由地址漂移；根因：接口治理整改扩大到不必要范围且参数标签不统一；处理：统一`json`参数标签，保持既有路由地址，撤回越界模块开关；验证：API/前端调用与 OpenSpec 校验通过。
 - [x] 反馈`FB-4`~`FB-8`：运行时配置错误、关闭错误日志、ctx 传递和`panic` allowlist 检查边界；根因：可恢复错误与诊断路径混用；处理：显式返回错误、补充调用上下文、迁移 allowlist 检查并降低扫描耦合；验证：静态检查和相关 Go 测试通过。
 - [x] 反馈`FB-9`~`FB-17`：SQL 注释、上传路由、shutdown、HTTP 文件拆分、健康超时、配置/中间件接口、插件安装 SQL 和字典 E2E；根因：治理细节分散在启动、SQL、接口和测试边界；处理：按 owner 模块收口并补充保护；验证：`make db.init`、E2E、OpenSpec 和审查通过。

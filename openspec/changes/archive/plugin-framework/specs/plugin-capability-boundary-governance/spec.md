@@ -82,3 +82,68 @@ TBD - created by archiving change refine-plugin-capability-boundaries. Update Pu
 - **WHEN** 源码插件和动态插件分别消费`framework.org.v1`
 - **THEN** 二者最终调用同一个`orgcap.Service`
 - **AND** 结果 DTO、降级语义、数据权限边界和错误码保持一致
+
+### Requirement: 插件生产代码不得依赖宿主核心表实现
+
+系统 SHALL 禁止源码插件和动态插件生产代码生成或直接查询宿主核心`sys_*`表、响应宿主私有缓存快照或宿主内部 service 实现。宿主核心数据 MUST 由对应领域 owner 通过领域能力、`pluginhost.Services`或动态`hostServices`协议发布。Go 语言`internal`目录规则已经阻断的宿主`DAO/DO/Entity`导入和类型使用不作为治理扫描规则重复检查。
+
+#### Scenario: 源码插件生成宿主核心表 DAO
+
+- **WHEN** 插件`backend/hack/config.yaml`声明生成`sys_user`、`sys_role`、`sys_dict_data`或其他宿主核心表
+- **THEN** 治理验证失败
+- **AND** 插件必须改为依赖对应领域能力契约
+
+#### Scenario: 插件生产代码直接查询宿主表
+
+- **WHEN** 插件生产代码调用`g.DB().Model("sys_*")`、`shared.TableSysUser`或等价直接表入口
+- **THEN** 治理验证失败
+- **AND** 变更不得通过审查，除非该调用位于测试、Mock、安装 SQL 或迁移治理例外边界内
+
+### Requirement: 源码插件和动态插件必须共享领域能力语义
+
+系统 SHALL 要求源码插件和动态插件访问同一宿主领域能力时共享领域 owner、输入输出 DTO、领域 ID 类型、数据权限、缓存一致性、错误语义和 i18n 标签语义。动态插件 hostServices handler 只能作为 transport 适配层，不得成为与源码插件平行的领域语义 owner。
+
+### Requirement: 插件公开能力服务必须归属 *cap 组件包
+
+系统 SHALL 要求`apps/lina-core/pkg/plugin/capability`下对插件公开的具体能力服务接口归属职责明确的领域命名空间或`*cap`组件包。`capability.Services`普通消费面 MUST 只返回各领域命名空间、`*cap.Service`或等价窄接口，不得返回`contract.*Service`具体服务接口。
+
+#### Scenario: 根能力目录返回具体服务
+
+- **WHEN** 开发者查看`capability.Services`
+- **THEN** 每个普通能力方法返回对应领域命名空间或`*cap`组件包的服务接口
+- **AND** 根目录不得继续暴露`Config()`、`PluginConfig()`、`PluginLifecycle()`或`PluginState()`
+
+#### Scenario: 认证授权能力族入口
+
+- **WHEN** 插件需要访问认证 token handoff 或授权能力
+- **THEN** 根能力目录只暴露`Services.Auth()`认证授权能力族入口
+- **AND** token 生命周期能力通过`Services.Auth().Token()`访问
+- **AND** 授权查询能力通过`Services.Auth().Authz()`访问
+
+### Requirement: Services 方法名必须按领域消费语义命名
+
+系统 SHALL 将`capability.Services`方法名视为插件开发者看到的领域入口。资源集合或领域命名空间 MAY 使用复数入口，例如`Users()`、`Jobs()`、`Plugins()`；单一上下文、配置能力或专有能力 SHOULD 使用单数或专有名词，例如`Tenant()`、`BizCtx()`、`HostConfig()`、`AI()`。
+
+### Requirement: 插件相关能力必须收口到 Plugins 命名空间
+
+系统 SHALL 将插件自身配置、插件状态、插件生命周期和插件治理投影收口到`Services.Plugins()`插件领域命名空间。根`capability.Services` MUST NOT 继续暴露`Config()`、`PluginConfig()`、`PluginLifecycle()`或`PluginState()`。
+
+### Requirement: 配置公开面只能包含插件自身配置和宿主配置
+
+系统 SHALL 将插件公开配置能力限定为两类：`Services.Plugins().Config()`读取当前插件自身配置，`Services.HostConfig()`读取宿主授权开放配置。根`Services.Config()` MUST NOT 作为普通插件公开入口存在。
+
+### Requirement: 租户过滤不得进入普通租户消费面
+
+系统 SHALL 将源码插件自有表`tenant_id`过滤接口归属到`tenantcap.PluginTableFilterService`，但该接口 MUST 只通过`pluginhost.Services.TenantFilter()`等源码插件专用受控接缝暴露。普通`capability.Services.Tenant()` MUST 只返回`tenantcap.Service`普通租户消费面。
+
+### Requirement: 公共原语包不得承载具体能力服务
+
+系统 SHALL 允许`capability`维护一个小型公共原语包，用于承载跨领域值对象。该公共原语包 MUST NOT 定义具体能力 Service、AdminService、factory、provider adapter 或 host service handler。
+
+### Requirement: 认证授权子能力必须收敛到 authcap 能力族
+
+系统 SHALL 将认证 token handoff 与授权能力作为`authcap`能力族维护。`authcap`根包只承载聚合入口，子领域`authcap/token`维护租户 token 契约，子领域`authcap/authz`维护权限投影和角色授权管理契约。
+
+### Requirement: 旧 capability/contract 具体服务聚合必须删除
+
+系统 SHALL 删除或清空`capability/contract`作为具体服务聚合包的职责。迁移完成后，生产代码、官方插件和测试替身 MUST 不再导入旧路径获取具体能力服务接口。

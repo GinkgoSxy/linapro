@@ -336,3 +336,36 @@
 - **WHEN** 目标插件安装成功
 - **THEN** 安装响应包含目标插件 ID
 - **AND** 安装响应不得包含自动安装成功的依赖插件列表
+
+### Requirement:插件 manifest 资源必须支持插件自作用域完整只读读取
+
+系统 SHALL 为源码插件和动态插件提供`HostServices.Manifest()`能力，使插件代码能够只读读取当前插件`manifest/`目录下的原始资源。读取范围 MUST 绑定当前插件 ID，覆盖`config/`、`sql/`、`i18n/`等专用目录中的文件原文。`metadata.yaml` SHALL 在插件实际提供该文件时作为可通过该能力读取的普通可选资源，但系统不得要求所有插件都提交`metadata.yaml`，也不得为 `metadata.yaml` 保留独立的 `Metadata` 服务或等价读取入口。
+
+#### Scenario:源码插件读取自身 config 资源原文
+
+- **WHEN** 源码插件调用`HostServices.Manifest().Get(ctx, "config/config.example.yaml")`
+- **AND** 该文件存在
+- **THEN** 系统返回该文件原始内容
+- **AND** 不把该读取结果作为插件运行期有效配置自动生效
+
+#### Scenario:源码插件读取自身 SQL 资源原文
+
+- **WHEN** 源码插件调用`HostServices.Manifest().Get(ctx, "sql/001-schema.sql")`
+- **AND** 该文件存在
+- **THEN** 系统返回该 SQL 文件原始内容
+- **AND** 不执行该 SQL
+
+#### Scenario:动态插件读取已授权专用目录资源原文
+
+- **WHEN** 动态插件调用`manifest.get`读取`config/config.example.yaml`、`sql/001-schema.sql`或`i18n/zh-CN/plugin.json`
+- **AND** 当前 active release artifact 携带对应资源且当前授权快照允许读取对应路径
+- **THEN** 系统从该 active release 的资源快照返回文件原始内容
+- **AND** 不触发配置生效、SQL 执行或翻译资源注册
+
+### Requirement:Manifest 资源读取路径安全治理必须覆盖专用目录
+
+系统 SHALL 将`Manifest()`的路径参数解释为相对当前插件`manifest/`根目录的 slash 路径。系统 MUST 拒绝空根读取、绝对路径、路径穿越、Windows drive path、URL、跨插件路径和未授权路径。系统 MUST 允许合法的 `config/`、`sql/` 和 `i18n/` manifest 相对路径参与同一套路径安全和授权校验。
+
+### Requirement:插件 manifest 专用生命周期资源不得被通用 Manifest 读取混用
+
+系统 SHALL 保持插件`manifest/sql/`、`manifest/i18n/`和`manifest/config/`等专用目录的既有治理边界。`HostServices.Manifest()`用于读取插件自身打包的 manifest 原始资源，可以读取这些专用目录中的文件原文，但不得绕过 SQL 生命周期管线、i18n 资源管线或插件配置服务。插件运行期有效配置 MUST 通过`HostServices.Config()`读取。

@@ -8,6 +8,7 @@ LinaPro 的开发与运维工具链需要支撑跨平台协作、可持续交付
 
 - 以`hack/tools/linactl`作为跨平台开发命令主入口，`Makefile`和 Windows`make.cmd`仅作为薄包装入口，统一`dev`、`stop`、`status`、`build`、`wasm`、`init`、`mock`、`test`、`env.check`、`env.setup`等命令。
 - 将镜像构建、动态插件 Wasm 打包、运行时 i18n 扫描和 GoFrame controller/DAO 生成整合到`linactl/internal/`，移除默认开发路径中的独立工具模块和外部`gf`二进制依赖。
+- 扩展`linactl ctrl`和`linactl dao`，支持显式指定生成目标目录（插件 ID 或后端目录），默认继续指向`apps/lina-core`；根`Makefile`、宿主`Makefile`和插件根目录`Makefile`提供一致的代码生成入口，插件目录通过共享`hack/makefiles/plugin.codegen.mk`统一维护，不再硬编码插件 ID 或后端路径。
 - 提供`agents`多资源命令树，统一管理 Agent 的`skills`、`prompts`和`AGENTS.md`桥接软链，并保持跨平台、安全、不删除真实目录或文件。
 - 建立月度 OpenSpec 自动归档和归档聚合 workflow，支持 Codex、Claude Code 和 GitHub Copilot CLI，使用共享 prompt、运行时凭据注入、阶段性 fail-fast、OpenSpec 校验和 PR 写回。
 - 加强 release 与 nightly 镜像发布治理：release 复用共享测试验证套件，校验 tag 与`framework.version`一致，成功后创建 GitHub Release；manual nightly 可显式跳过测试门禁用于维护重发。
@@ -37,7 +38,8 @@ LinaPro 的开发与运维工具链需要支撑跨平台协作、可持续交付
 
 ## Impact
 
-- 影响仓库开发命令、工具模块组织、GitHub Actions、安装脚本、Agent 资源桥接、OpenSpec 月度治理、release/nightly 发布和开发期升级流程的历史追溯。
+- 影响仓库开发命令、工具模块组织、GitHub Actions、安装脚本、Agent 资源桥接、OpenSpec 月度治理、release/nightly 发布、GoFrame 代码生成入口和开发期升级流程的历史追溯。
 - 不改变当前运行时代码、HTTP API、数据库 schema、业务权限、数据权限、插件运行时契约、前端 UI 或运行时缓存行为；`plugin-upgrade-governance`等运行时插件契约由`archive/plugin-framework`和主规范承载。
+- 插件目录影响仅为新增根目录薄`Makefile`并引入共享`hack/makefiles/plugin.codegen.mk`，不修改插件业务源码、插件清单、生命周期资源或运行时授权边界。
 - `i18n`历史影响主要来自工具文档、workflow 注释、OpenSpec 任务记录和少量运行时实现阶段的独立 owner 变更；本次压缩不修改语言包、`manifest/i18n`或`apidoc i18n JSON`。
 - 验证以工具单元测试、命令 smoke、GitHub Actions YAML/shell 检查、OpenSpec 校验、release/nightly workflow 验证、性能审计 dry-run 和文档镜像同步为主；本次压缩只做 OpenSpec 文档治理验证。

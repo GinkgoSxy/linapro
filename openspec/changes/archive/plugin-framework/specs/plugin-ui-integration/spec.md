@@ -309,3 +309,23 @@
 - **WHEN** 动态插件菜单 path 直接声明为 `/x-assets/{plugin-id}/{version}/index.html`
 - **THEN** 系统不得把该 path 当作管理工作台动态路由来替代 `system/plugin/dynamic-page`
 - **AND** 插件开发文档和测试夹具必须使用动态页组件加资源 URL 参数的迁移形态
+
+### Requirement:插件管理页面首屏必须使用摘要列表读模型
+
+系统 SHALL 将插件管理列表首屏改为轻量、分页、有上限的摘要查询；`GET /plugins`只返回表格与行级操作可直接使用的最小字段，不再返回详情、安装、卸载、升级、授权确认弹窗专用字段。后端拆分插件管理"摘要列表读模型"和"详情治理读模型"，列表路径不得通过构建完整 `PluginItem` 后裁剪字段实现。
+
+#### Scenario:首次进入加载分页摘要列表
+- **WHEN** 管理员首次进入插件管理页面
+- **THEN** 页面仅请求 `GET /plugins` 分页摘要列表渲染首屏表格
+- **AND** 列表响应不包含 `dependencyCheck`、`requestedHostServices`、`authorizedHostServices`、`declaredRoutes`或 cron 声明详情
+- **AND** 页面不得为了渲染首屏列表对每一行自动请求 `GET /plugins/{id}`
+
+#### Scenario:打开详情时按需加载完整治理字段
+- **WHEN** 管理员从列表点击插件详情操作
+- **THEN** 页面打开详情弹窗前请求 `GET /plugins/{id}`
+- **AND** 详情弹窗使用服务端返回的完整治理字段展示依赖检查、宿主服务授权、动态路由和必要的 cron 审查信息
+
+#### Scenario:首屏路由不同步加载重型弹窗组件
+- **WHEN** 管理员首次进入插件管理页面且尚未打开任何弹窗
+- **THEN** 前端首屏路由 chunk 只包含表格、筛选、行操作和必要轻量 helper
+- **AND** 详情、动态上传、安装授权、卸载、升级和生命周期前置条件弹窗组件按需异步加载

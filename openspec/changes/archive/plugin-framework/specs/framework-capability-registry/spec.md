@@ -120,3 +120,14 @@ TBD - created by archiving change refine-plugin-capability-boundaries. Update Pu
 - **WHEN** 插件或宿主只读取某个 capability 的`Available(ctx)`状态
 - **THEN** 系统不得写入插件 registry 或清空无关插件、语言包、路由或前端 bundle 缓存
 - **AND** 只读检查不得产生跨实例失效事件
+
+### Requirement: 框架能力必须按 *cap 组件归属
+
+系统 SHALL 通过`pkg/plugin/capability/orgcap`、`pkg/plugin/capability/tenantcap`、`pkg/plugin/capability/aicap`等独立`*cap`组件维护框架能力。系统 MUST NOT 再新增或保留`pkg/pluginservice`聚合包、`pkg/frameworkcap`聚合包或旧兼容包。
+
+#### Scenario: 源码插件租户过滤子接口由 tenantcap 维护
+
+- **WHEN** 源码插件需要对插件自有表按当前租户追加`tenant_id`过滤
+- **THEN** 过滤接口位于`pkg/plugin/capability/tenantcap`公开边界下
+- **AND** 入口只通过`pluginhost.Services.TenantFilter()`暴露给源码插件
+- **AND** 动态插件 guest SDK 和`hostServices`协议不得暴露该接口

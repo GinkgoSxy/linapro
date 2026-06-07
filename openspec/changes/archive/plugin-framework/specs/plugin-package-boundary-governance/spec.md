@@ -166,3 +166,31 @@ TBD - created by archiving change refactor-plugin-package-boundaries. Update Pur
 - **WHEN** 源码插件通过能力目录读取配置、manifest、组织、租户或业务上下文
 - **THEN** 返回 DTO、降级策略、数据权限和缓存一致性策略保持不变
 - **AND** 仅公共包路径从`pkg/pluginservice`迁移到`pkg/plugin/capability`
+
+### Requirement: capability 子包命名必须表达能力组件职责
+
+系统 SHALL 要求`apps/lina-core/pkg/plugin/capability`下的插件公开能力组件使用`*cap`命名方式表达领域能力职责。除`guest`、`recordstore`、`internal`和公共原语包等明确非具体能力组件外，公开能力组件 MUST 使用`<domain>cap`包名。
+
+#### Scenario: AI 能力组件命名
+
+- **WHEN** 系统发布`AI`能力族聚合入口
+- **THEN** Go 包路径使用`pkg/plugin/capability/aicap`
+- **AND** 不得继续使用`pkg/plugin/capability/ai`作为公开能力组件包
+
+#### Scenario: 认证授权能力族命名
+
+- **WHEN** 系统发布认证 token 与授权能力
+- **THEN** Go 包路径使用`pkg/plugin/capability/authcap`作为认证授权能力族聚合入口
+- **AND** token 子领域位于`pkg/plugin/capability/authcap/token`
+- **AND** 授权子领域位于`pkg/plugin/capability/authcap/authz`
+
+#### Scenario: 租户过滤能力归属
+
+- **WHEN** 源码插件需要使用插件自有表租户过滤能力
+- **THEN** 过滤接口归属`pkg/plugin/capability/tenantcap`下的源码插件专用接口
+- **AND** 不得继续保留`pkg/plugin/capability/tenantfilter`公开包
+- **AND** 不得新增独立`pkg/plugin/capability/tenantfiltercap`能力组件包
+
+### Requirement: 旧非 *cap 能力包不得作为生产入口保留
+
+系统 SHALL 在迁移完成后删除旧非`*cap`公开能力包入口。生产代码、官方插件、动态插件样例和测试替身 MUST 不再导入旧非`*cap`具体能力包。同时不得新增`capability/tenantfiltercap`独立能力组件，也不得通过根`Services.Config()`、`Services.PluginConfig()`、`Services.PluginLifecycle()`或`Services.PluginState()`访问插件相关能力。

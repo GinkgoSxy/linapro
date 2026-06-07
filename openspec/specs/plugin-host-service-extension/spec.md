@@ -327,3 +327,396 @@
 - **THEN** 该能力必须注册到`pluginservice.Services`或其子目录
 - **AND** 动态插件的 host service handler 只把 bridge 请求映射到该统一目录
 
+### Requirement: 动态插件必须通过 ai.text.generate 调用文本 AI
+
+系统 SHALL 在动态插件宿主服务体系中新增 `ai` service family，首期仅开放 `text.generate` 方法。动态插件 MUST 通过 `hostServices` 声明申请该能力，并由宿主授权快照确认后才能调用。
+
+#### Scenario: 插件声明文本 AI 宿主服务
+
+- **WHEN** 动态插件在 `plugin.yaml` 中声明 `service: ai` 和 `methods: [text.generate]`
+- **THEN** 构建器或宿主清单校验 MUST 识别该声明为文本 `AI` 调用权限申请
+- **AND** 声明 MUST 支持 `resources` 中以 `purpose:<name>` 表达调用用途
+- **AND** 声明本身 MUST NOT 自动授予运行时调用权限
+- **AND** 运行时 MUST 将该方法映射为 `capabilityType=text` 与 `capabilityMethod=generate`
+
+#### Scenario: 未声明插件调用被拒绝
+
+- **WHEN** 动态插件未声明或未获确认 `ai.text.generate` 授权却发起文本 `AI` 调用
+- **THEN** 宿主 MUST 在执行 `framework.ai.text.v1` 或渠道调用前拒绝
+- **AND** 宿主 MUST 返回结构化授权错误
+
+### Requirement: ai.text.generate 必须受 service、method 和资源授权约束
+
+系统 SHALL 对每一次 `ai.text.generate` 调用同时校验 service、method、`purpose` 资源、调用来源和策略属性。任一校验失败时，宿主 MUST 拒绝调用，并且 MUST NOT 执行外部渠道请求。
+
+#### Scenario: 授权 purpose 调用成功进入文本能力
+
+- **WHEN** 动态插件已获 `ai.text.generate` 授权
+- **AND** 调用请求的 `purpose` 与授权快照中的 `purpose:<name>` 匹配
+- **THEN** host service handler MUST 将请求转换为 `framework.ai.text.v1` 的 `GenerateText` 请求
+- **AND** 调用 MUST 复用同一个文本能力消费 service 和 provider 可用性语义
+- **AND** 档位解析 MUST 使用 `text.generate + tier` 作为能力范围
+
+#### Scenario: 未授权 purpose 被拒绝
+
+- **WHEN** 动态插件请求未在授权快照中确认的 `purpose`
+- **THEN** 宿主 MUST 拒绝调用
+- **AND** 宿主 MUST NOT 解析档位绑定、读取渠道密钥或执行渠道 API 请求
+
+#### Scenario: 策略属性限制输出规模
+
+- **WHEN** 授权资源声明包含 `maxOutputTokens` 等策略属性
+- **THEN** 宿主 MUST 在转发到 `framework.ai.text.v1` 前校验请求参数不超过授权范围
+- **AND** 超出范围的请求 MUST 被拒绝或按显式策略收敛，且不得静默扩大权限
+
+### Requirement: ai.text.generate 调用契约必须支持文本参数和 thinkingEffort
+
+系统 SHALL 为动态插件 `ai.text.generate` 定义 DTO 化调用载荷。载荷 MUST 支持 `purpose`、`tier`、`messages`、`maxOutputTokens`、`temperature`、可选 `thinkingEffort` 和短字符串 `metadata`，并与 `framework.ai.text.v1` 保持语义一致。
+
+#### Scenario: 动态插件传入 thinkingEffort
+
+- **WHEN** 动态插件调用 `ai.text.generate` 并传入 `thinkingEffort`
+- **THEN** 宿主 MUST 校验该值属于 `low`、`medium`、`high`、`xhigh`、`max`
+- **AND** 授权通过后 MUST 将该值传递给 `framework.ai.text.v1`
+- **AND** 模型不支持该 effort 时 MUST 返回文本能力的结构化业务错误
+
+#### Scenario: 动态插件不传 thinkingEffort
+
+- **WHEN** 动态插件调用 `ai.text.generate` 未传 `thinkingEffort`
+- **THEN** 宿主 MUST 保持字段为空并由档位默认值或模型默认行为决定实际 effort
+- **AND** 宿主 MUST NOT 在 host service 层硬编码某个渠道专有 effort 值
+
+#### Scenario: 动态插件 metadata 有界
+
+- **WHEN** 动态插件在 `ai.text.generate` 中传入 `metadata`
+- **THEN** 宿主 MUST 只接受短字符串键值用于调用来源、业务请求 ID 或审计关联
+- **AND** 宿主 MUST 拒绝或截断超出契约边界的大段输入
+
+### Requirement: ai.text.generate 必须记录最小审计信息
+
+系统 SHALL 对动态插件发起的 `ai.text.generate` 调用记录最小宿主服务审计和智能中心调用日志。审计 MUST 支持诊断授权、耗时、状态和来源插件，但 MUST NOT 保存完整输入、完整输出、隐藏思考内容或密钥。
+
+#### Scenario: 成功调用记录来源
+
+- **WHEN** 动态插件通过 `ai.text.generate` 成功生成文本
+- **THEN** 宿主服务审计 MUST 记录 `pluginId`、service、method、purpose 摘要、结果状态和耗时
+- **AND** 智能中心调用日志 MUST 记录 `sourcePluginId`、`purpose`、档位、渠道模型投影、`thinkingEffort`、token 用量和耗时
+
+#### Scenario: 失败调用记录脱敏错误
+
+- **WHEN** 动态插件调用 `ai.text.generate` 失败
+- **THEN** 宿主服务审计和智能中心调用日志 MUST 记录失败状态与脱敏错误摘要
+- **AND** 审计和日志 MUST NOT 包含完整 `messages`、API key、认证头或渠道响应原文
+
+### Requirement: ai service 必须拒绝首期未开放的方法
+
+系统 SHALL 将 `ai` service family 设计为可扩展宿主服务族，但首期 MUST 只开放 `text.generate`。图片、音频、向量、重排、工具调用、流式输出或其他 `AI` 方法在未有正式规范和授权模型前 MUST 被拒绝。
+
+#### Scenario: 未开放 image 方法被拒绝
+
+- **WHEN** 动态插件声明或调用 `ai.image.generate`
+- **THEN** 构建器、宿主清单校验或运行时 handler MUST 拒绝该方法
+- **AND** 错误 MUST 指出该 `AI` host service method 当前不受支持
+
+#### Scenario: 后续能力独立扩展
+
+- **WHEN** 系统后续新增图片、音频或向量能力
+- **THEN** 新方法 MUST 明确定义 `capabilityType`、`capabilityMethod`、资源授权、请求响应 DTO、审计字段和与框架 capability 的适配关系
+- **AND** 新方法 MUST NOT 改变现有 `ai.text.generate` 的授权和同步文本响应语义
+
+### Requirement: hostServices 必须支持领域服务和领域方法
+
+系统 SHALL 允许动态插件通过`hostServices`声明宿主发布的领域服务和领域方法。领域协议服务名 MUST 使用语言无关的领域名，例如`user`、`authz`、`dict`、`org`、`tenant`、`plugin`和`ai`，不得使用 Go 包名或宿主内部实现名。每个领域方法 MUST 映射到领域能力接口或受控领域适配器。
+
+#### Scenario: 动态插件声明用户领域读取
+
+- **WHEN** 动态插件在`plugin.yaml`中声明`service: user`和`methods: [users.batch_get, users.search]`
+- **THEN** 宿主校验该领域服务和方法已发布
+- **AND** 安装授权确认后将归一化声明写入运行时授权快照
+
+#### Scenario: 动态插件调用未知领域方法
+
+- **WHEN** 动态插件调用未发布、未声明或未授权的领域方法
+- **THEN** 宿主返回能力拒绝或能力不可用错误
+- **AND** 不进入任何领域业务逻辑
+
+### Requirement: host service 调用必须传递 CapabilityContext
+
+系统 SHALL 在每一次动态`hostServices`领域调用中构造并传递`CapabilityContext`。该上下文 MUST 包含插件`ID`、执行来源、actor、tenant、授权快照、资源或投影标识、系统调用标识和审计摘要。
+
+#### Scenario: 请求型 host service 调用
+
+- **WHEN** 动态插件在请求路由中调用领域`host service`
+- **THEN** WASM host service handler 将当前用户、租户、插件`ID`、路由来源和授权快照传入领域适配器
+- **AND** 领域适配器基于上下文执行数据权限和审计治理
+
+#### Scenario: 系统型 host service 调用
+
+- **WHEN** 动态插件在生命周期、hook 或定时任务中调用领域`host service`
+- **THEN** WASM host service handler 使用宿主创建的系统 actor 构造上下文
+- **AND** 需要用户上下文的领域方法必须拒绝或按领域定义的系统调用边界执行
+
+### Requirement: 动态领域管理方法使用安装授权模型
+
+系统 SHALL 允许动态插件在`hostServices`中声明宿主显式发布的领域管理方法。安装或启用阶段确认授权后，运行时不再额外校验当前用户是否拥有对应工作台菜单或按钮权限；领域管理方法 MUST 继续校验目标资源可见性、租户边界、数据权限、状态机、数量上限和审计来源。
+
+#### Scenario: 动态插件调用授权管理方法
+
+- **WHEN** 动态插件调用已授权的领域管理方法
+- **THEN** host service handler 校验`service + method`存在于运行时授权快照
+- **AND** 请求进入对应领域`AdminService`或命令适配器
+- **AND** 领域命令执行目标边界、状态机和审计校验
+
+#### Scenario: 动态插件越权访问目标资源
+
+- **WHEN** 动态插件已获方法授权但请求操作跨租户、不可见或状态不允许的目标资源
+- **THEN** 领域方法拒绝该操作
+- **AND** 响应使用结构化业务错误
+- **AND** 宿主记录失败审计摘要
+
+### Requirement: 宿主服务适配器必须适配到`*cap`能力组件
+
+系统 SHALL 要求源码插件 hostservices directory、动态插件`WASM`host service handler 和 guest SDK 最终适配到`pkg/plugin/capability/<domain>cap`能力组件。适配层 MUST 不再依赖`capability/contract`具体能力服务接口作为运行时服务目录契约。
+
+#### Scenario: 源码插件构造宿主服务目录
+
+- **WHEN** 宿主启动期构造源码插件可消费的`capability.Services`
+- **THEN** directory 字段和方法返回目标`*cap.Service`
+- **AND** 认证授权能力以`authcap.Service`能力族聚合入口发布，token 子服务归属`authcap/token`，授权子服务归属`authcap/authz`
+- **AND** 插件作用域配置 factory 通过`Plugins().Config()`对应子服务发布
+- **AND** 其他插件作用域能力 factory 使用对应`manifestcap`或其他目标组件
+- **AND** 源码插件专用`TenantFilter()`返回`tenantcap.PluginTableFilterService`，且不进入普通`capability.Services`
+
+#### Scenario: 动态 host service 调用领域能力
+
+- **WHEN** 动态插件通过`hostServices`调用`service + method`
+- **THEN** `WASM`host service handler 校验授权后进入对应`*cap.Service`或`*cap.AdminService`
+- **AND** handler 不得通过旧`contract.*Service`绕过目标能力组件
+
+### Requirement: 动态插件不得直接消费源码插件租户过滤器
+
+系统 SHALL 禁止动态插件 guest SDK、动态`hostServices`协议和`WASM`host service handler 暴露`tenantcap.PluginTableFilterService`、`*gdb.Model`、SQL 片段、DAO 或 query builder。动态插件租户隔离 MUST 通过普通`tenantcap.Service`读取当前租户或校验租户可见性，并由宿主 host service handler 在调用边界执行与宿主 API 等价的数据权限和租户边界过滤。
+
+#### Scenario: 动态插件读取当前租户
+
+- **WHEN** 动态插件需要知道当前请求租户
+- **THEN** guest SDK 通过普通`Tenant().Current()`或等价 host service 调用读取
+- **AND** 宿主返回租户 DTO 或租户 ID
+- **AND** guest 不得获得`tenantcap.PluginTableFilterService`
+
+#### Scenario: 动态插件调用宿主数据读取能力
+
+- **WHEN** 动态插件通过用户、文件、通知、配置、插件治理或其他 host service 读取数据
+- **THEN** 对应 handler 在宿主侧基于调用身份、`pluginID`、当前租户、授权快照和既有数据权限边界执行过滤
+- **AND** 动态插件不得传入 SQL、DAO、`*gdb.Model`或 query builder 表达租户过滤
+
+#### Scenario: 未来动态插件需要自有数据存储
+
+- **WHEN** 动态插件需要维护插件自有持久化数据
+- **THEN** 系统必须另行设计租户安全存储能力
+- **AND** 该能力由宿主按`pluginID + tenantID`自动隔离
+- **AND** 不得复用源码插件专用`TenantFilter()`作为动态插件数据访问协议
+
+### Requirement: Go 包重命名不得改变动态插件协议
+
+系统 SHALL 将本次`*cap`包重命名视为 Go 公共包边界重构。动态插件`plugin.yaml hostServices`声明、运行时授权快照、`service`字符串、`method`字符串、资源授权、protobuf envelope、错误 envelope 和审计语义 MUST 保持当前目标模型不变。
+
+#### Scenario: 动态插件声明 AI 文本能力
+
+- **WHEN** 动态插件声明`service: ai`和`method: text.generate`
+- **THEN** 宿主仍按`service: ai`和`method: text.generate`校验授权
+- **AND** Go 侧能力组件重命名为`aicap`不得要求插件清单改为`service: aicap`
+
+#### Scenario: 动态插件读取插件配置
+
+- **WHEN** 动态插件声明`service: config`和`methods: [get]`
+- **THEN** 宿主仍按`config.get`授权快照执行校验
+- **AND** Go 侧插件配置能力收口到`Plugins().Config()`不得改变动态协议服务名
+
+#### Scenario: 动态插件读取宿主配置
+
+- **WHEN** 动态插件声明`service: hostConfig`和授权配置 key
+- **THEN** 宿主仍按宿主配置授权快照执行校验
+- **AND** Go 侧宿主配置能力使用`HostConfig()`，不得与`Plugins().Config()`混用
+
+### Requirement: 适配器迁移必须复用启动期共享实例
+
+系统 SHALL 在`*cap`包重命名和接口迁移后继续由宿主运行期统一构造 host service 适配器。缓存敏感服务、插件状态、配置、`i18n`、会话、通知、组织、租户和插件生命周期等依赖 MUST 复用启动期共享实例或共享后端，不得因包迁移在插件调用路径中临时`New()`关键服务图。
+
+#### Scenario: 源码插件读取缓存
+
+- **WHEN** 源码插件通过迁移后的`cachecap.Service`读取插件作用域缓存
+- **THEN** 该服务仍委托启动期传入的共享`kvcache`后端
+- **AND** 不得在每次插件调用中创建独立缓存实例
+
+#### Scenario: 动态插件读取插件状态
+
+- **WHEN** 动态插件通过迁移后的`Plugins().State()`读取启用状态
+- **THEN** handler 仍使用启动期注入的共享插件状态服务或共享快照
+- **AND** 不得退化为仅当前节点可见的包级默认实例
+
+### Requirement: 动态插件 AI host service 必须支持多模态方法声明
+
+系统 SHALL 扩展动态插件`service: ai`host service，使插件可以声明图片、向量、音频、视觉、文档、安全审核和视频方法。每个方法 MUST 映射到明确的`capabilityType + capabilityMethod`和独立授权分类。
+
+#### Scenario: 插件声明图片生成能力
+
+- **WHEN** 动态插件在`plugin.yaml`中声明`service: ai`和`methods: [image.generate]`
+- **THEN** 构建器或宿主清单校验 MUST 识别该声明为`image.generate`权限申请
+- **AND** 运行时 MUST 将方法映射为`capabilityType=image`和`capabilityMethod=generate`
+- **AND** 声明本身 MUST NOT 自动授予运行时调用权限
+
+#### Scenario: 插件声明音频能力
+
+- **WHEN** 动态插件声明`audio.transcribe`或`audio.synthesize`
+- **THEN** 宿主 MUST 分别识别为不同 host service 方法
+- **AND** 两个方法 MUST 使用独立 payload 契约、资源策略和授权分类
+
+#### Scenario: computer act 声明被拒绝
+
+- **WHEN** 动态插件声明`computer.act`、`ui.operate`或等价 UI 控制方法
+- **THEN** 清单校验或运行时 MUST 拒绝该声明
+- **AND** 错误 MUST 表明该方法不属于本轮`ai`host service 支持范围
+
+### Requirement: 多模态 AI host service 必须按方法和资源授权
+
+系统 SHALL 对每一次多模态`ai`host service 调用同时校验 service、method、resource、调用来源和策略属性。任一校验失败时，宿主 MUST 在读取密钥、解析档位或调用渠道前拒绝请求。
+
+#### Scenario: 授权资源匹配后调用成功
+
+- **WHEN** 动态插件已获`image.generate`授权
+- **AND** 请求的`purpose`、输入 mime 类型、最大输入资产数和最大输出数量均满足授权资源策略
+- **THEN** host service handler MUST 将请求转换为`AI().Image().Generate(...)`或等价能力调用
+- **AND** 调用 MUST 复用对应子能力的 provider 可用性和错误语义
+
+#### Scenario: 未授权 purpose 被拒绝
+
+- **WHEN** 动态插件请求未在授权快照中确认的`purpose`
+- **THEN** 宿主 MUST 拒绝调用
+- **AND** 宿主 MUST NOT 读取渠道 endpoint、secret 引用或模型绑定
+
+#### Scenario: payload 超限被拒绝
+
+- **WHEN** 动态插件上传或引用的输入资产数量、字节数、mime 类型、输出数量或 token 上限超过授权策略
+- **THEN** 宿主 MUST 拒绝调用或按显式策略收敛
+- **AND** 宿主 MUST NOT 静默扩大插件授权范围
+
+### Requirement: AI host service 大对象 payload 必须使用资产引用
+
+系统 SHALL 要求动态插件多模态`ai`host service 使用`assetRef`或受控临时资产引用传递大对象。host service 请求和响应 MUST NOT 传输无上限 base64 或完整二进制内容。
+
+#### Scenario: 图片输入使用资产引用
+
+- **WHEN** 动态插件调用`vision.analyze`并提供图片输入
+- **THEN** 请求 MUST 使用`assetRef`、mime 类型和大小投影引用图片
+- **AND** 宿主 MUST 校验该资产引用对当前插件和请求上下文可访问
+
+#### Scenario: 音频输出使用资产引用
+
+- **WHEN** 动态插件调用`audio.synthesize`成功
+- **THEN** 响应 MUST 返回输出音频的`assetRef`和摘要投影
+- **AND** 响应 MUST NOT 返回完整音频 base64
+
+### Requirement: AI host service 必须支持 provider operation 查询边界
+
+系统 SHALL 允许动态插件在获得授权后使用 provider operation 查询方法跟踪渠道异步 operation。operation 查询 MUST 表达渠道协议状态，MUST NOT 表达业务任务状态。
+
+#### Scenario: 视频生成返回 provider operation
+
+- **WHEN** 动态插件调用`video.generate`
+- **AND** 渠道返回异步 operation
+- **THEN** host service 响应 MUST 返回不透明`operationRef`、状态、渠道模型投影、`nextPollAfterMs`和过期时间
+- **AND** 响应 MUST NOT 返回业务任务 ID
+
+#### Scenario: 查询 operation 状态
+
+- **WHEN** 动态插件调用`video.operation.get`
+- **AND** 插件已获该 operation 所属方法和资源授权
+- **THEN** 宿主 MUST 返回 operation 当前状态或完成后的资产引用
+- **AND** 宿主 MUST NOT 返回 provider 原始认证 URL、密钥或完整响应正文
+
+#### Scenario: 未授权取消被拒绝
+
+- **WHEN** 动态插件调用`video.operation.cancel`
+- **AND** 授权资源未允许取消或 provider 不支持取消
+- **THEN** 宿主 MUST 拒绝调用并返回结构化错误
+- **AND** 宿主 MUST NOT 执行 provider 取消请求
+
+### Requirement: 多模态 AI host service 必须记录最小审计
+
+系统 SHALL 对动态插件多模态`ai`host service 调用记录最小审计信息。审计 MUST 支持诊断插件、方法、资源、耗时、状态和错误，但 MUST NOT 保存完整输入输出、大对象内容、渠道响应原文或密钥。
+
+#### Scenario: 成功调用记录摘要
+
+- **WHEN** 动态插件通过多模态`ai`host service 成功调用 provider
+- **THEN** 宿主服务审计 MUST 记录`pluginId`、service、method、purpose、授权资源摘要、状态和耗时
+- **AND** 智能中心调用日志 MUST 记录来源插件、能力方法、渠道模型投影、资产引用摘要和用量摘要
+
+#### Scenario: 失败调用脱敏
+
+- **WHEN** 多模态`ai`host service 调用失败
+- **THEN** 审计和调用日志 MUST 记录失败状态、稳定错误码和脱敏错误摘要
+- **AND** 审计和日志 MUST NOT 包含完整文件内容、音视频内容、API key、认证头或渠道响应原文
+
+### Requirement: WASM host service 生产依赖必须由启动期显式配置
+
+系统 SHALL 由宿主启动期统一配置 WASM host service dispatcher 所需的 cache、lock、notify、storage config、plugin config、manifest、AI、organization、tenant 和其他 host service 运行期依赖。生产代码中的 WASM host service 包级变量 MUST NOT 默认调用 `New()` 创建 cache、config、session、notify、lock、plugin service 或 capability manager 等关键服务实例。缺失配置 MUST 以显式初始化错误或 host call internal error 暴露。
+
+#### Scenario: 启动期配置共享 cache host service
+
+- **WHEN** 宿主 HTTP runtime 初始化动态插件 WASM host service
+- **THEN** `cache` host service 使用启动期已创建并选定共享后端的 `kvcache.Service`
+- **AND** WASM host service 包不得保留可被生产路径使用的默认 `kvcache.New()` fallback
+
+#### Scenario: storage host service 使用启动期配置服务
+
+- **WHEN** 动态插件调用 `storage` host service
+- **THEN** storage dispatcher 使用启动期注入的插件动态存储配置 reader
+- **AND** 不通过包级默认 `config.New()` 读取独立配置服务图
+
+#### Scenario: 测试 fixture 显式注入 host service 依赖
+
+- **WHEN** 单元测试或集成测试执行 WASM host service dispatcher
+- **THEN** 测试 fixture 显式调用配置入口注入 fake、memory 或共享测试服务
+- **AND** 测试不得依赖生产包级默认服务实例
+
+### Requirement: host service 配置入口必须覆盖完整依赖集
+
+系统 SHALL 为 WASM host service 提供一个启动期可调用的完整配置入口，覆盖所有已发布 host service dispatcher 的必需运行期依赖。新增 host service dispatcher 时，系统 MUST 同步更新配置入口和缺失配置测试，确保新依赖不会绕过启动装配。
+
+#### Scenario: 新增 host service 后配置覆盖测试失败
+
+- **WHEN** 开发者新增一个 WASM host service dispatcher
+- **AND** 未把该 dispatcher 的必需依赖纳入统一配置入口或覆盖测试
+- **THEN** 自动化测试失败
+- **AND** 失败信息指向缺失的 host service 配置项
+
+### Requirement: 动态插件 guest SDK 必须通过 AI 命名空间调用文本 AI
+
+系统 SHALL 在动态插件 guest 侧通过 `AI().Text()` 暴露文本 `AI` 能力。guest SDK 的 `AI().Text().GenerateText(...)` MUST 继续使用既有 `ai.text.generate` host service 协议，并保持 `host:ai:text`、`purpose:<name>` 和策略属性授权语义不变。
+
+#### Scenario: 动态插件通过 AI 命名空间生成文本
+
+- **WHEN** 动态插件需要调用文本 `AI` 生成能力
+- **THEN** guest 代码 MUST 通过 `guest.Default().AI().Text().GenerateText(...)` 或等价能力目录入口发起调用
+- **AND** guest SDK MUST NOT 继续要求调用方使用根目录 `AIText()` 方法
+
+#### Scenario: guest AI Text 调用进入既有 host service
+
+- **WHEN** guest SDK 执行 `AI().Text().GenerateText(...)`
+- **THEN** SDK MUST 构造既有 `service: ai`、`method: text.generate` host service 调用
+- **AND** 请求资源 MUST 继续使用 `purpose:<name>` 表达授权用途
+- **AND** 宿主 MUST 在执行文本能力或渠道调用前完成 service、method、资源和策略属性校验
+
+#### Scenario: 动态插件协议不因 Go 入口重构改变
+
+- **WHEN** 系统将 guest 侧调用入口从 `AIText()` 重构为 `AI().Text()`
+- **THEN** 动态插件 `plugin.yaml` 中的 `hostServices` 声明格式 MUST 保持 `service: ai` 和 `methods: [text.generate]`
+- **AND** `host:ai:text` 的能力分类、`maxOutputTokens` 等资源策略和脱敏审计语义 MUST 保持不变
+
+#### Scenario: 未开放的 AI 子能力仍被拒绝
+
+- **WHEN** 动态插件通过 `AI()` 命名空间尝试调用尚未规范化的图片、向量、音频或其他 `AI` 子能力
+- **THEN** guest SDK 或宿主 MUST 返回不支持错误
+- **AND** 宿主 MUST NOT 因存在 `AI()` 聚合入口而自动授予未声明子能力
+

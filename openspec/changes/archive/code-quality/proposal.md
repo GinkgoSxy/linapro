@@ -4,6 +4,8 @@ LinaPro 后端曾同时存在 API 合同漂移、响应边界过宽、GoFrame v2
 
 项目没有历史兼容包袱，因此历史整改选择直接把 API 合同、后端分层、显式依赖注入、宿主运行能力、启动 SQL 效率、i18n 相关前端状态刷新和 Go 单元测试效率统一纳入代码质量基线，并通过 OpenSpec、规则文件、静态扫描、单元测试、E2E 和`lina-review`形成可持续治理闭环。
 
+此外，OpenSpec 归档文档在初始聚合后存在跨分组重复承载最终能力契约的问题，归档体量约`3.5M`、归档`spec.md`为`277`个、跨分组重复能力为`61`个，导致维护者和 AI 难以快速判断当前契约与历史信息的边界。同时，`lina-review` 对 E2E 的审查重点偏向文件组织和编号等合规项，缺少对覆盖有效性、断言有效性和测试可信度的结果级质量判断。
+
 ## What Changes
 
 - 统一 API REST 语义、路径参数绑定、DTO 文档标签、批量删除、响应 DTO、瞬时时间字段毫秒时间戳和跨模块稳定枚举契约。
@@ -13,6 +15,8 @@ LinaPro 后端曾同时存在 API 合同漂移、响应边界过宽、GoFrame v2
 - 引入启动编排内共享 startup snapshot、差异驱动插件同步、无差异零写入路径、内置任务投影复用和结构化启动摘要，降低启动 SQL 噪声和重复装配成本。
 - 优化语言切换、监控轮询、消息轮询和路由缓存等前端运行路径，避免语言切换重拉权限菜单、隐藏页签继续轮询或长会话缓存无界增长。
 - 建立 Go 单元测试效率规则：保留`-race`主路径，收敛真实 dynamic Wasm 执行为 smoke，复用轻量 fixture，减少无测试包完整执行并输出耗时摘要。
+- 建立 OpenSpec 归档文档治理规则：信息分层、能力 owner 映射、重复规范裁剪、分阶段压缩、语义覆盖和验证报告要求，将归档体量从约`3.5M`压缩至约`1.5M`。
+- 增强`.agents/rules/testing.md`，新增 E2E 质量审查的结果级要求，覆盖有效性、断言有效性、稳定性、异常路径和审查输出，不绑定具体测试实现方式。
 
 ## Capabilities
 
@@ -22,12 +26,14 @@ LinaPro 后端曾同时存在 API 合同漂移、响应边界过宽、GoFrame v2
 - `startup-sql-efficiency`：启动快照复用、差异驱动同步、无差异零写入、内置任务投影复用和启动摘要日志。
 - `service-dependency-injection-governance`：显式依赖注入、共享实例、初始化错误返回、聚合依赖结构体禁止和静态治理扫描。
 - `go-unit-test-execution-efficiency`：Go 单测分层、真实 Wasm smoke 边界、fixture 复用、`-race`保留、无测试包规划和耗时摘要。
+- `openspec-archive-document-governance`：OpenSpec 归档文档的信息分层、能力 owner 映射、重复规范裁剪、分阶段压缩、语义覆盖和验证报告要求。
 
 ### Modified Capabilities
 
 - `api-contract-consistency`：REST 语义、参数绑定、文档标签、响应 DTO 加固、毫秒时间戳和公共枚举契约。
 - `backend-conformance`：GoFrame ORM/软删除、事务、`panic`治理、主文件职责、接口注释、接口方法唯一性、文件顶部注释和`lina-review`后端检查。
 - `framework-i18n-runtime-performance`：语言切换只刷新强语言相关本地状态，菜单和路由标题通过本地 i18n key 响应式更新。
+- `e2e-suite-organization`：新增 E2E 质量审查的结果级要求和审查输出证据要求。
 
 ## Impact
 

@@ -3,7 +3,7 @@ name: lina-community-release-changelog
 description: >-
   手动生成 LinaPro 版本更新日志。用户要求生成 changelog、release notes、版本更新日志、发布说明，或提到
   lina-community-release-changelog 时必须使用本技能。技能会基于 Git 历史、源码差异和 OpenSpec 内容整理详尽的双语
-  Markdown 更新日志，支持默认比较范围和用户指定两个版本/标签/提交进行比较，固定写入 temp/changelog.md。
+  Markdown 更新日志，支持默认比较范围和用户指定两个版本/标签/提交进行比较，固定写入 localdocs/changelog.md。
 ---
 
 # Lina Release Changelog
@@ -13,13 +13,13 @@ description: >-
 ## 核心原则
 
 1. **只手动执行**：不得自动创建 `GitHub Release`、推送标签、提交文件或修改任何 `.github/workflows/` 文件。
-2. **固定输出路径**：生成结果必须写入仓库根目录 `temp/changelog.md`。
+2. **固定输出路径**：生成结果必须写入仓库根目录 `localdocs/changelog.md`。
 3. **固定模板**：英文内容在上，中文内容在下，中间使用模板分割线；不得新增模板外章节。
 4. **证据优先**：必须基于 `Git` 历史、源码差异和 `OpenSpec` 内容整理，不要求也不等待 `PR` 标识、`label` 或发布说明字段。
 5. **详尽覆盖**：输出面向发布人员和用户，不是提交摘要；必须覆盖比较范围内关键功能、修复和工具链体验变化。
 6. **双语一致**：英文和中文分别完整成文，事实覆盖一致，不交叉混写。
 7. **表达自然**：英文和中文都必须地道、清晰、流利、易懂；按目标语言重新组织句子，不做生硬直译，不使用少见、拗口或容易误解的词语。
-8. **尊重工作区**：执行前查看 `git status --short`。除 `temp/changelog.md` 外，不修改无关文件；不要还原用户已有改动。
+8. **尊重工作区**：执行前查看 `git status --short`。除 `localdocs/changelog.md` 外，不修改无关文件；不要还原用户已有改动。
 
 ## 输入范围
 
@@ -218,17 +218,17 @@ git -C apps/lina-plugins fetch --tags --prune origin
 
 ### 写入文件
 
-确保 `temp/` 目录存在，然后将完整内容写入：
+确保 `localdocs/` 目录存在，然后将完整内容写入：
 
 ```text
-temp/changelog.md
+localdocs/changelog.md
 ```
 
-`temp/` 已被 `.gitignore` 忽略。不要把生成的 `temp/changelog.md` 添加到版本控制。
+`localdocs/` 已被 `.gitignore` 忽略。不要把生成的 `localdocs/changelog.md` 添加到版本控制。
 
 ### 7. 自检
 
-写入后必须重新读取 `temp/changelog.md`，检查：
+写入后必须重新读取 `localdocs/changelog.md`，检查：
 
 1. 只包含固定模板章节。
 2. 中间分割线存在。
